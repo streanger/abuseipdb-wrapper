@@ -73,9 +73,15 @@ Screenshots
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/colors_legend.png
 
+----
+
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/check_example.png
 
+----
+
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/viewer_example1.png
+
+----
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/viewer_example2.png
 
