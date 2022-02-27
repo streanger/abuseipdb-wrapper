@@ -31,14 +31,14 @@ Example usage
 
  - **init `AbuseIPDB` object**
  
-	Init AbuseIPDB object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended becasue this project aims on storing data for further quick access without need of another requests.
+    Init AbuseIPDB object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended becasue this project aims on storing data for further quick access without need of another requests.
 	
     .. code-block:: python
 
         from abuseipdb_wrapper import AbuseIPDB
-		API_KEY = 'YOUR_API_KEY'
-		abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')  # provide API KEY and local db filename
-		abuse.colors_legend()  # show colors legend
+	    API_KEY = 'YOUR_API_KEY'
+	    abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')  # provide API KEY and local db filename
+	    abuse.colors_legend()  # show colors legend
 		
  - **check list of IP's**
     
@@ -88,19 +88,19 @@ Update/Todo
 todo/to consider
 **********************
 
-    -add last_checked column with containing timestamp
+ - add last_checked column with containing timestamp
 	
-    -wrap text in table cells (juster/justify modification needed)
+ - wrap text in table cells (juster/justify modification needed)
 	
-    -allow for justify/center table (consider)
+ - allow for justify/center table (consider)
 	
-    -allow for db sorting (specified by user)
+ - allow for db sorting (specified by user)
 	
-    -IP ranges for viewer -> 1.2.3.0/24
+ - IP ranges for viewer -> 1.2.3.0/24
 	
-    -make console script (consider)
+ - make console script (consider)
 	
-    -think of more info than 'data' section in api response: reports -> comments, categories
+ - think of more info than 'data' section in api response: reports -> comments, categories
 	
-	-check subnet 1.2.3.4/24 -> https://www.abuseipdb.com/check-block/1.2.3.4/24
+ - check subnet 1.2.3.4/24 -> https://www.abuseipdb.com/check-block/1.2.3.4/24
 	
