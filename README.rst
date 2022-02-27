@@ -1,9 +1,9 @@
-*****
+*****************
 abuseipdb_wrapper
-*****
+*****************
 
 Info
-########
+#######
 
  - python wrapper for abuseipdb API -> https://docs.abuseipdb.com/#introduction
 
@@ -14,7 +14,7 @@ Info
  - aimed to local db usage, quick query and response
 
 Install
-########
+#######
 
 .. code-block:: python
 
@@ -27,7 +27,7 @@ or
 	pip install git+https://github.com/streanger/abuseipdb_wrapper.git
 	
 Example usage
-########
+#############
 
  - **init `AbuseIPDB` object**
  
@@ -69,7 +69,7 @@ Example usage
 		abuse.viewer()
 		
 Screenshots
-########
+###########
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/colors_legend.png
 
@@ -80,7 +80,7 @@ Screenshots
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/viewer_example2.png
 
 Update/Todo
-########
+###########
 
 todo/to consider
 **********************
