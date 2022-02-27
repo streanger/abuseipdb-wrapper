@@ -79,9 +79,6 @@ Screenshots
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/viewer_example2.png
 
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/multiline_paste.png
-
-
 Update/Todo
 ########
 
