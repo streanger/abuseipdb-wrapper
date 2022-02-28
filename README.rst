@@ -36,38 +36,38 @@ Example usage
     .. code-block:: python
 
         from abuseipdb_wrapper import AbuseIPDB
-	    API_KEY = 'YOUR_API_KEY'
-	    abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')  # provide API KEY and local db filename
-	    abuse.colors_legend()  # show colors legend
-		
+	API_KEY = 'YOUR_API_KEY'
+	abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')  # provide API KEY and local db filename
+	abuse.colors_legend()  # show colors legend
+	
  - **check list of IP's**
     
     Specify list of IP's to check and apply them using `add_ip_list` method. Next step run `check` method and wait.
     
     .. code-block:: python
 
-		ips = ['1.2.3.4', '5.6.7.8', '9.10.11.12', '13.14.15.16']
-		abuse.add_ip_list(ips)
-		abuse.check()
-		
+	ips = ['1.2.3.4', '5.6.7.8', '9.10.11.12', '13.14.15.16']
+	abuse.add_ip_list(ips)
+	abuse.check()
+	
  - **show local db**
     
     To display collected information use `show_db` call. Data table should be displayed on terminal. Alternatively call `print` on your `AbuseIPDB` object. Before showing db you can specifiy columns to be displayed. Do it using `apply_columns_order` method.
 	
     .. code-block:: python
 
-		abuse.apply_columns_order(['ipAddress', 'abuseConfidenceScore', 'totalReports', 'countryCode', 'domain', 'isp'])  # 'url'
-		print(abuse)
-		abuse.show_db(matched_only=False, table_view=True)
-		
+	abuse.apply_columns_order(['ipAddress', 'abuseConfidenceScore', 'totalReports', 'countryCode', 'domain', 'isp'])
+	print(abuse)
+	abuse.show_db(matched_only=False, table_view=True)
+	
  - **db viewer**
     
     For interactive viewing of IP's and checking them as well use `viewer` method. It let you to provide list of IP's or single one. Use help for more information.
     
     .. code-block:: python
 
-		abuse.viewer()
-		
+	abuse.viewer()
+	
 Screenshots
 ###########
 
