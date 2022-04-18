@@ -486,7 +486,16 @@ class AbuseIPDB():
         
     @staticmethod
     def _ip_sorter(ip):
-        return '.'.join(['{:03}'.format(int(item)) for item in ip.split('.')])
+        """creation of sortable values based on the given IP"""
+        try:
+            if '.' in ip:
+                # IPv4
+                return '.'.join([item.zfill(3) for item in ip.split('.')])
+            else:
+                # IPv6
+                return ipaddress.IPv6Address(ip).exploded
+        except:
+            return ip
         
     def export_csv(self, filename, matched_only=False):
         """export databse to csv file"""
