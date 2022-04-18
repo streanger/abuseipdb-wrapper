@@ -488,11 +488,14 @@ class AbuseIPDB():
     def _ip_sorter(ip):
         """creation of sortable values based on the given IP"""
         try:
-            # IPv4
-            return '.'.join(['{:03}'.format(int(item)) for item in ip.split('.')])
+            if '.' in ip:
+                # IPv4
+                return '.'.join([item.zfill(3) for item in ip.split('.')])
+            else:
+                # IPv6
+                return ipaddress.IPv6Address(ip).exploded
         except:
-            # IPv6
-            return '.'.join(['{:05}'.format(int(item, 16)) for item in ip.split(':')]) 
+            return ip
         
     def export_csv(self, filename, matched_only=False):
         """export databse to csv file"""
