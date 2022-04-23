@@ -37,7 +37,8 @@ Example usage
 
         from abuseipdb_wrapper import AbuseIPDB
 	API_KEY = 'YOUR_API_KEY'
-	abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')  # provide API KEY and local db filename
+	# provide API KEY and local db filename
+	abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')
 	abuse.colors_legend()  # show colors legend
 	
  - **check list of IP's**
@@ -56,7 +57,9 @@ Example usage
 	
     .. code-block:: python
 
-	abuse.apply_columns_order(['ipAddress', 'abuseConfidenceScore', 'totalReports', 'countryCode', 'domain', 'isp'])
+	abuse.apply_columns_order(
+		['ipAddress', 'abuseConfidenceScore', 'totalReports', 'countryCode', 'domain', 'isp']
+		)
 	print(abuse)
 	abuse.show_db(matched_only=False, table_view=True)
 	
