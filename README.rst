@@ -71,6 +71,12 @@ Example usage
 
 	abuse.viewer()
 	
+ - **export db to csv file**
+ 
+    .. code-block:: python
+    
+        abuse.export_csv('out.csv', matched_only=False)
+ 
 Screenshots
 ###########
 
