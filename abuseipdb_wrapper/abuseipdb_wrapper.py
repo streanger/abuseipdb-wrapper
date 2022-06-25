@@ -1,22 +1,16 @@
-import sys
 import os
 import re
-import io
-import time
-import datetime
+import csv
 import json
+import datetime
 import ipaddress
 import requests
-import csv
 from rich import box
 from rich import print
-from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich.prompt import Prompt
-from rich.syntax import Syntax
 from rich.console import Console
-from rich.columns import Columns
 
 
 class AbuseIPDB:
@@ -155,9 +149,8 @@ class AbuseIPDB:
         Eliminates any column styling
         https://github.com/Textualize/rich/discussions/1799
         """
-        console = Console()
-        with console.capture() as capture:
-            console.print(table)
+        with self.__console.capture() as capture:
+            self.__console.print(table)
         return Text.from_ansi(capture.get())
 
     def _db_str(self, matched_only=None, table_view=None):
@@ -238,6 +231,7 @@ class AbuseIPDB:
         return db_str
 
     def show_db(self, matched_only=None, table_view=None):
+        """show database in nice format"""
         if matched_only is None:
             matched_only = self._matched_only
         if table_view is None:
@@ -370,7 +364,7 @@ class AbuseIPDB:
             color = "green"
         return color
 
-    def check(self, display_live=True, force_new=False):
+    def check(self, force_new=False):
         """iterate over collected IP list
         -think of input/output
         """
@@ -447,7 +441,7 @@ class AbuseIPDB:
     @staticmethod
     def _write_json(filename, data):
         """write to json file"""
-        with open(filename, "w") as fp:
+        with open(filename, "w", encoding="utf-8") as fp:
             # ensure_ascii -> False/True -> characters/u'type'
             json.dump(data, fp, sort_keys=True, indent=4, ensure_ascii=False)
         return True
@@ -457,7 +451,7 @@ class AbuseIPDB:
         """read json file to dict"""
         data = {}
         try:
-            with open(filename) as f:
+            with open(filename, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except FileNotFoundError:
             print("[yellow]\[x] file not found: {}".format(filename))
@@ -498,7 +492,7 @@ class AbuseIPDB:
             else:
                 # IPv6
                 return ipaddress.IPv6Address(ip).exploded
-        except:
+        except Exception:
             return ip
 
     def export_csv(self, filename, matched_only=None):
@@ -512,7 +506,7 @@ class AbuseIPDB:
             keys = matched[0].keys()
         except IndexError:
             keys = []
-        with open(filename, "w", newline="") as output_file:
+        with open(filename, "w", newline="", encoding="utf-8") as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(matched)
