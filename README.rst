@@ -97,7 +97,18 @@ Screenshots
 Update/Todo
 ###########
 
-todo/to consider
+
+
+todo/think of (25.06.2022)
+**********************
+
+ - html output (from rich table or from pandas df)
+ 
+ - black background for better view in powershell
+
+ - wrap text in table columns (not only cut off with dots)
+ 
+todo/think of
 **********************
 
  - add last_checked column with containing timestamp
