@@ -180,7 +180,7 @@ class AbuseIPDB:
         # ********* colord table *********
         if table_view:
             border_style = "blue on black"
-            header_style = "green_yellow on royal_blue1"
+            header_style = "bold green_yellow on royal_blue1"
             is_powershell = len(os.getenv("PSModulePath", "").split(os.pathsep)) >= 3
             if is_powershell:
                 # https://stackoverflow.com/questions/55597797/detect-whether-current-shell-is-powershell-in-python
