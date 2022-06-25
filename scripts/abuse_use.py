@@ -4,7 +4,7 @@ from abuseipdb_wrapper import AbuseIPDB
 
 
 def script_path():
-    '''set current path, to script path'''
+    """set current path, to script path"""
     current_path = os.path.realpath(os.path.dirname(sys.argv[0]))
     os.chdir(current_path)
     return current_path

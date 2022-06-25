@@ -5,7 +5,7 @@ with open("README.rst", "r") as fh:
     
 setuptools.setup(
     name='abuseipdb_wrapper',
-    version='0.1.2',
+    version='0.1.3',
     keywords="abuseipdb abuse ip",
     author="streanger",
     author_email="divisionexe@gmail.com",
@@ -16,7 +16,7 @@ setuptools.setup(
     packages=['abuseipdb_wrapper', ],
     python_requires=">=3.5",
     license='MIT',
-    install_requires=['requests', 'termcolor', ],
+    install_requires=['requests', 'termcolor', 'rich'],
     include_package_data=False,
     package_data={
     },
