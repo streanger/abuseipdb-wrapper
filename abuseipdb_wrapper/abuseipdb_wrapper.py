@@ -14,7 +14,7 @@ from rich.console import Console
 
 
 class AbuseIPDB:
-    """api"""
+    """abuseipdb api wrapper"""
 
     def __init__(self, API_KEY=None, ip_list=None, db_file=None):
         if API_KEY is None:
@@ -74,12 +74,12 @@ class AbuseIPDB:
         """show colors legend used in application
         https://newreleases.io/project/pypi/rich/release/5.0.0
         """
-        print("[cyan]legend:")
-        print("[cyan]    [*] cyan    - information")
-        print("[green]    [+] green   - things made fine; low level of abuse")
-        print("[yellow]    \[x] yellow  - warning; medium level of abuse")
-        print("[red]    [-] red     - errors; high level of abuse")
-        print("[magenta]    [!] magenta - unexpected things happened")
+        print("[cyan on black]legend:")
+        print("[cyan on black]    [*] cyan    - information")
+        print("[green on black]    [+] green   - things made fine; low level of abuse")
+        print("[yellow on black]    \[x] yellow  - warning; medium level of abuse")
+        print("[red on black]    [-] red     - errors; high level of abuse")
+        print("[magenta on black]    [!] magenta - unexpected things happened")
         return None
 
     def get_db(self, matched_only=None):
@@ -179,17 +179,22 @@ class AbuseIPDB:
 
         # ********* colord table *********
         if table_view:
+            border_style = "blue on black"
+            header_style = "green_yellow on royal_blue1"
             is_powershell = len(os.getenv("PSModulePath", "").split(os.pathsep)) >= 3
             if is_powershell:
                 # https://stackoverflow.com/questions/55597797/detect-whether-current-shell-is-powershell-in-python
-                table = Table(box=box.ASCII)
+                table = Table(
+                    box=box.ASCII, border_style=border_style, header_style=header_style
+                )
             else:
-                table = Table()
+                table = Table(border_style=border_style, header_style=header_style)
 
             # ********* columns *********
-            table.add_column("No", style="green_yellow")
+            column_on_style = "on black"
+            table.add_column("No", style="green_yellow {}".format(column_on_style))
             for column in self._table_columns_order:
-                table.add_column(column, style="royal_blue1")
+                table.add_column(column, style="royal_blue1 {}".format(column_on_style))
 
             # ********* rows *********
             for index, value in enumerate(sorted_matches):
@@ -272,12 +277,13 @@ class AbuseIPDB:
         return None
 
     def _viewer_help(self):
-        print("[cyan]viewer help:")
-        print("[cyan]    cls\clear            -clear terminal")
-        print("[cyan]    exit\quit            -exit from viewer")
-        print("[cyan]    toggle_view          -toggle table view")
-        print("[cyan]    toggle_check_live    -check IP live if not in db")
-        print("[cyan]    all                  -show all IP's from db")
+        """viewer help content"""
+        print("[cyan on black]viewer help:")
+        print("[cyan on black]    cls\clear            -clear terminal")
+        print("[cyan on black]    exit\quit            -exit from viewer")
+        print("[cyan on black]    toggle_view          -toggle table view")
+        print("[cyan on black]    toggle_check_live    -check IP live if not in db")
+        print("[cyan on black]    all                  -show all IP's from db")
         return None
 
     def viewer(self, check_live=True):
