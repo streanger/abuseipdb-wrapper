@@ -461,7 +461,11 @@ class AbuseIPDB:
         if self._db_file is not None:
             self._write_json(self._db_file, self._ip_database)
             if self.verbose:
-                print("[cyan][*] data saved to file:[/cyan] [green_yellow]{}".format(self._db_file))
+                print(
+                    "[cyan][*] data saved to file:[/cyan] [green_yellow]{}".format(
+                        self._db_file
+                    )
+                )
         return None
 
     def __str__(self):
@@ -543,6 +547,9 @@ class AbuseIPDB:
 
         # create dataframe; filter columns, clickable url & sorting
         df = pd.DataFrame(matched)
+        if not set(self._table_columns_order).issubset(df.columns):
+            print("[yellow][x] nothing to export")
+            return Falase
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
         if not xlsx and "url" in df.columns:
@@ -590,6 +597,9 @@ class AbuseIPDB:
 
         # create dataframe; filter columns
         df = pd.DataFrame(matched)
+        if not set(self._table_columns_order).issubset(df.columns):
+            print("[yellow][x] nothing to export")
+            return Falase
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
         df.to_csv(filename, encoding="utf-8")
@@ -692,6 +702,7 @@ https://stackoverflow.com/questions/3086973/how-do-i-convert-this-list-of-dictio
 https://stackoverflow.com/questions/41983209/how-do-i-add-images-to-a-pypi-readme-that-works-on-github
 https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/
 https://stackoverflow.com/questions/55597797/detect-whether-current-shell-is-powershell-in-python
+https://stackoverflow.com/questions/24870306/how-to-check-if-a-column-exists-in-pandas
 
 legend:
     [*] cyan    - information
