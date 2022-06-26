@@ -535,7 +535,7 @@ class AbuseIPDB:
             with open(filename, mode, encoding="utf-8") as f:
                 f.write(text)
         except Exception as err:
-            print("[red][x] Failed to write to file: {}, err: {}".format(filename, err))
+            print("[red]\[x] Failed to write to file: {}, err: {}".format(filename, err))
         return None
 
     def export_html_styled(self, filename, matched_only=None, xlsx=False):
@@ -548,7 +548,7 @@ class AbuseIPDB:
         # create dataframe; filter columns, clickable url & sorting
         df = pd.DataFrame(matched)
         if not set(self._table_columns_order).issubset(df.columns):
-            print("[yellow][x] nothing to export")
+            print("[yellow]\[x] nothing to export")
             return False
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
@@ -598,7 +598,7 @@ class AbuseIPDB:
         # create dataframe; filter columns
         df = pd.DataFrame(matched)
         if not set(self._table_columns_order).issubset(df.columns):
-            print("[yellow][x] nothing to export")
+            print("[yellow]\[x] nothing to export")
             return False
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
