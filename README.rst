@@ -112,7 +112,7 @@ Update/Todo
 
 
 todo/think of (25.06.2022)
-**********************
+****************************
 
 - html output (from rich table or from pandas df)
  
@@ -121,7 +121,7 @@ todo/think of (25.06.2022)
 - wrap text in table columns (not only cut off with dots)
  
 todo/think of
-**********************
+****************************
 
 - add last_checked column with containing timestamp
 	
