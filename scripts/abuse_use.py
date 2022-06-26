@@ -12,9 +12,7 @@ def script_path():
     
 if __name__ == "__main__":
     script_path()
-    if os.name == 'nt':
-        os.system('color')
-        
+    
     # ********* abuseipdb API wrapper *********
     API_KEY = 'YOUR_API_KEY'
     abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')
@@ -27,7 +25,7 @@ if __name__ == "__main__":
     
     # ********* local db view *********
     abuse.apply_columns_order(['ipAddress', 'abuseConfidenceScore', 'totalReports', 'countryCode', 'domain', 'isp'])  # 'url'
-    print(abuse)
+    # print(abuse)
     abuse.show_db(matched_only=False, table_view=True)
     
     # ********* viewer *********

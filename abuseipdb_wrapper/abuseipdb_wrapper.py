@@ -1,22 +1,25 @@
 import os
 import re
-import csv
 import json
 import datetime
 import ipaddress
 import requests
+import pandas as pd
 from rich import box
 from rich import print
 from rich.table import Table
 from rich.text import Text
+from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.console import Console
+from rich.columns import Columns
+from pandas.io.formats.style import Styler
 
 
 class AbuseIPDB:
     """abuseipdb api wrapper"""
 
-    def __init__(self, API_KEY=None, ip_list=None, db_file=None):
+    def __init__(self, API_KEY=None, ip_list=None, db_file=None, verbose=None):
         if API_KEY is None:
             raise ValueError("[red][-] no API_KEY specified")
         self._API_KEY = API_KEY
@@ -40,6 +43,7 @@ class AbuseIPDB:
             "totalReports",
             "url",
             "usageType",
+            "date",
         ]
         self._table_columns_order = [
             "ipAddress",
@@ -51,8 +55,9 @@ class AbuseIPDB:
             "isp",
         ]
         self._matched_only = False
-        self._table_view = True
+        self.table_view = True
         self.__console = Console(color_system="truecolor")
+        self.verbose = bool(verbose)
 
         # ********* filename & db *********
         self._db_file = db_file
@@ -74,12 +79,19 @@ class AbuseIPDB:
         """show colors legend used in application
         https://newreleases.io/project/pypi/rich/release/5.0.0
         """
-        print("[cyan on black]legend:")
-        print("[cyan on black]    [*] cyan    - information")
-        print("[green on black]    [+] green   - things made fine; low level of abuse")
-        print("[yellow on black]    \[x] yellow  - warning; medium level of abuse")
-        print("[red on black]    [-] red     - errors; high level of abuse")
-        print("[magenta on black]    [!] magenta - unexpected things happened")
+        legend_lines = [
+            "[cyan]legend:",
+            "[cyan]    [*] cyan    - information",
+            "[green]    [+] green   - things made fine; low level of abuse",
+            "[yellow]    \[x] yellow  - warning; medium level of abuse",
+            "[red]    [-] red     - errors; high level of abuse",
+            "[magenta]    [!] magenta - unexpected things happened",
+        ]
+        lines_joined = "\n".join(legend_lines)
+        legend = Columns(
+            [Panel(lines_joined, style="on black", border_style="royal_blue1")]
+        )
+        print(legend)
         return None
 
     def get_db(self, matched_only=None):
@@ -98,8 +110,7 @@ class AbuseIPDB:
         self._ip_list = []
         return None
 
-    @staticmethod
-    def assert_ip_list(ip_list):
+    def assert_ip_list(self, ip_list):
         """if not valid, throw error"""
         if type(ip_list) not in (list, tuple):
             print("[red][-] ip_list should be type of list or tuple")
@@ -110,11 +121,13 @@ class AbuseIPDB:
             try:
                 valid_ip = str(ipaddress.ip_address(item))
                 if valid_ip != item:
-                    print("[cyan][*] conversion: {} -> {}".format(item, valid_ip))
+                    if self.verbose:
+                        print("[cyan][*] conversion: {} -> {}".format(item, valid_ip))
                 valid_list.append(valid_ip)
 
             except ValueError as err:
-                print("[red][-] not valid IP address: {}".format(item))
+                if self.verbose:
+                    print("[red][-] not valid IP address: {}".format(item))
                 # raise  # re-throw exception; it may not be needed
         return valid_list
 
@@ -142,6 +155,8 @@ class AbuseIPDB:
         data = decoded["data"]
         url = "https://www.abuseipdb.com/check/{}".format(ip)
         data["url"] = url
+        now = self._timestamp()
+        data["date"] = now
         return data
 
     def __log_table(self, table):
@@ -165,7 +180,7 @@ class AbuseIPDB:
             matched_only = self._matched_only
 
         if table_view is None:
-            table_view = self._table_view
+            table_view = self.table_view
 
         if matched_only:
             matched = self._match_keys(self._ip_database, self._ip_list)
@@ -199,7 +214,7 @@ class AbuseIPDB:
             # ********* rows *********
             for index, value in enumerate(sorted_matches):
                 selected_data_row = [
-                    str(value[key]) for key in self._table_columns_order
+                    str(value.get(key, "")) for key in self._table_columns_order
                 ]
                 abuse_color = self._abuse_color(value["abuseConfidenceScore"])
                 table.add_row(str(index + 1), *selected_data_row, style=abuse_color)
@@ -214,7 +229,7 @@ class AbuseIPDB:
             for index, value in enumerate(sorted_matches):
                 abuse_color = self._abuse_color(value["abuseConfidenceScore"])
                 selected_data_dict = {
-                    key: value[key] for key in self._table_columns_order
+                    key: value.get(key, "") for key in self._table_columns_order
                 }
                 items_str = "\n".join(
                     [
@@ -240,7 +255,7 @@ class AbuseIPDB:
         if matched_only is None:
             matched_only = self._matched_only
         if table_view is None:
-            table_view = self._table_view
+            table_view = self.table_view
         print(self._db_str(matched_only, table_view))
         return None
 
@@ -272,18 +287,25 @@ class AbuseIPDB:
 
     def toggle_view(self):
         """switch db view -> vertical/table; main purpose is .viewer method, which uses __str__"""
-        self._table_view = not self._table_view
-        print("[cyan][*] self._table_view: {}".format(self._table_view))
+        self.table_view = not self.table_view
+        print("[cyan][*] self.table_view:[/cyan] {}".format(self.table_view))
         return None
 
     def _viewer_help(self):
         """viewer help content"""
-        print("[cyan on black]viewer help:")
-        print("[cyan on black]    cls\clear            -clear terminal")
-        print("[cyan on black]    exit\quit            -exit from viewer")
-        print("[cyan on black]    toggle_view          -toggle table view")
-        print("[cyan on black]    toggle_check_live    -check IP live if not in db")
-        print("[cyan on black]    all                  -show all IP's from db")
+        help_lines = [
+            "[green_yellow]viewer help:",
+            "[green_yellow]    cls\clear    - clear terminal",
+            "[green_yellow]    exit\quit    - exit from viewer",
+            "[green_yellow]    view         - toggle table view",
+            "[green_yellow]    live         - check IP live if not in db",
+            "[green_yellow]    all          - show all IP's from db",
+        ]
+        lines_joined = "\n".join(help_lines)
+        legend = Columns(
+            [Panel(lines_joined, style="on black", border_style="royal_blue1")]
+        )
+        print(legend)
         return None
 
     def viewer(self, check_live=True):
@@ -311,12 +333,12 @@ class AbuseIPDB:
                 else:
                     os.system("clear")
                 continue
-            elif query == "toggle_view":
+            elif query == "view":
                 self.toggle_view()
                 continue
-            elif query == "toggle_check_live":
+            elif query == "live":
                 check_live = not check_live
-                print("[cyan][*] check_live: {}".format(check_live))
+                print("[cyan][*] check_live:[/cyan] {}".format(check_live))
                 continue
             elif query == "help":
                 self._viewer_help()
@@ -332,7 +354,8 @@ class AbuseIPDB:
             ips_query = [item for item in ips_query if item]
             self.add_ip_list(ips_query)
             if not self._ip_list:
-                print("[yellow]\[x] empty IP list for query")
+                if self.verbose:
+                    print("[yellow]\[x] empty IP list for query")
                 continue
 
             if check_live:
@@ -437,7 +460,8 @@ class AbuseIPDB:
         # ********* update db file if provided *********
         if self._db_file is not None:
             self._write_json(self._db_file, self._ip_database)
-            print("[cyan][*] data saved to file: {}".format(self._db_file))
+            if self.verbose:
+                print("[cyan][*] data saved to file: {}".format(self._db_file))
         return None
 
     def __str__(self):
@@ -501,23 +525,128 @@ class AbuseIPDB:
         except Exception:
             return ip
 
+    def _write_file(self, filename, text, mode="w"):
+        """write to file"""
+        try:
+            with open(filename, mode, encoding="utf-8") as f:
+                f.write(text)
+        except Exception as err:
+            print("[red][x] Failed to write to file: {}, err: {}".format(filename, err))
+        return None
+
+    def export_html_styled(self, filename, matched_only=None, xlsx=False):
+        """export database to styled html file using pandas"""
+        if matched_only:
+            matched = self._match_keys(self._ip_database, self._ip_list).values()
+        else:
+            matched = self._ip_database.values()
+
+        # create dataframe; filter columns, clickable url & sorting
+        df = pd.DataFrame(matched)
+        df = df[self._table_columns_order]
+        df.fillna("", inplace=True)
+        if not xlsx and "url" in df.columns:
+            df["url"] = ["<a href={}>{}</a>".format(item, item) for item in df["url"]]
+        if "ipAddress" in df.columns:
+            df["ip_sorter"] = df["ipAddress"].apply(lambda x: self._ip_sorter(x))
+            df.sort_values(
+                [
+                    "ip_sorter",
+                ],
+                ascending=[
+                    True,
+                ],
+                inplace=True,
+            )
+            df.drop(columns="ip_sorter", inplace=True)
+            df.reset_index(drop=True, inplace=True)
+            df.index += 1
+        else:
+            df.index += 1
+
+        # create styled object & export it to file
+        styled = apply_style(df)
+        if xlsx:
+            # to xlsx
+            styled.to_excel(filename)
+        else:
+            # to html
+            html = styled.to_html(render_links=True, escape=False)
+            self._write_file(filename, html)
+
+        print("[cyan][*] data saved to file:[/cyan] [green_yellow]{}".format(filename))
+        return None
+
+    def export_xlsx_styled(self, filename, matched_only=None):
+        """export database to styled xlsx file using pandas"""
+        self.export_html_styled(filename, matched_only=matched_only, xlsx=True)
+
     def export_csv(self, filename, matched_only=None):
         """export databse to csv file"""
         if matched_only:
-            matched = list(self._match_keys(self._ip_database, self._ip_list).values())
+            matched = self._match_keys(self._ip_database, self._ip_list).values()
         else:
-            matched = list(self._ip_database.values())
+            matched = self._ip_database.values()
 
-        try:
-            keys = matched[0].keys()
-        except IndexError:
-            keys = []
-        with open(filename, "w", newline="", encoding="utf-8") as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(matched)
-        print("[cyan][*] data saved to file: {}".format(filename))
+        # create dataframe; filter columns
+        df = pd.DataFrame(matched)
+        df = df[self._table_columns_order]
+        df.fillna("", inplace=True)
+        df.to_csv(filename, encoding="utf-8")
+        print("[cyan][*] data saved to file:[/cyan] [green_yellow]{}".format(filename))
         return None
+
+
+def style_df(x):
+    """style dataframe series"""
+    # ***** color style *****
+    # add many levels
+    if x["abuseConfidenceScore"] > 50:
+        bg_style = ["background-color: #ffcccb"]  # lightred
+    elif 20 < x["abuseConfidenceScore"] <= 50:
+        bg_style = ["background-color: #ffcc7a"]  # yellow
+    else:
+        bg_style = ["background-color: lightgreen"]
+
+    # ***** other styles *****
+    other_styles = ["text-align:right"]
+
+    # ***** total style *****
+    total_style = ";".join(bg_style + other_styles)
+    return [total_style] * len(x)
+
+
+def apply_style(df):
+    """apply style to whole dataframe"""
+    styles = [
+        # table properties
+        dict(
+            selector="",
+            props=[
+                ("margin-left", "auto"),
+                ("margin-right", "auto"),
+                ("width", "80%"),
+            ],
+        ),
+        dict(
+            selector="td",
+            props=[
+                ("border", "1px solid #777"),
+                ("border-spacing", "10px"),
+                ("padding", "5px"),
+            ],
+        ),
+    ]
+
+    # large tables styling limitations
+    # https://github.com/pandas-dev/pandas/issues/39400
+    # styled = df.style.apply(style_df, axis=1) \
+    styled = (
+        Styler(df, uuid_len=0, cell_ids=False)
+        .apply(style_df, axis=1)
+        .set_table_styles(styles, overwrite=True)
+    )
+    return styled
 
 
 def main():
@@ -539,8 +668,10 @@ if __name__ == "__main__":
             "countryCode",
             "domain",
             "isp",
+            "date",
+            "url",
         ]
-    )  # 'url'
+    )
     abuse.colors_legend()
     abuse.viewer()
 
