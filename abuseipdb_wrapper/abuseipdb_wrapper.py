@@ -461,7 +461,7 @@ class AbuseIPDB:
         if self._db_file is not None:
             self._write_json(self._db_file, self._ip_database)
             if self.verbose:
-                print("[cyan][*] data saved to file: {}".format(self._db_file))
+                print("[cyan][*] data saved to file:[/cyan] [green_yellow]{}".format(self._db_file))
         return None
 
     def __str__(self):
