@@ -549,7 +549,7 @@ class AbuseIPDB:
         df = pd.DataFrame(matched)
         if not set(self._table_columns_order).issubset(df.columns):
             print("[yellow][x] nothing to export")
-            return Falase
+            return False
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
         if not xlsx and "url" in df.columns:
@@ -599,7 +599,7 @@ class AbuseIPDB:
         df = pd.DataFrame(matched)
         if not set(self._table_columns_order).issubset(df.columns):
             print("[yellow][x] nothing to export")
-            return Falase
+            return False
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
         df.to_csv(filename, encoding="utf-8")
