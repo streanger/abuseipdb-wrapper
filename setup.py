@@ -16,7 +16,7 @@ setuptools.setup(
     packages=['abuseipdb_wrapper', ],
     python_requires=">=3.5",
     license='MIT',
-    install_requires=['requests', 'rich', 'pandas'],
+    install_requires=['requests', 'rich', 'pandas', 'openpyxl'],
     include_package_data=False,
     package_data={
     },
