@@ -1,5 +1,5 @@
 *****************
-abuseipdb_wrapper
+abuseipdb-wrapper
 *****************
 
 Info
@@ -7,9 +7,7 @@ Info
 
 - python wrapper for abuseipdb API -> https://docs.abuseipdb.com/#introduction
 
-- one way API - only gets info about IP address abuse
- 
-- particulary info - data section from API response is parsed and extended with abuseipdb related url
+- allows you to get info about specified IP address(es) abuse
  
 - aimed to local db usage, quick query and response
 
@@ -18,13 +16,13 @@ Install
 
 .. code-block:: python
 
-    pip install abuseipdb_wrapper
+    pip install abuseipdb-wrapper
 
 or
 
 .. code-block:: python
 
-	pip install git+https://github.com/streanger/abuseipdb_wrapper.git
+    pip install git+https://github.com/streanger/abuseipdb_wrapper.git
 	
 Example usage
 #############
