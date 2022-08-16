@@ -95,6 +95,24 @@ Example usage
     
     df = abuse.get_df(matched_only=False)
 	
+- **json columns**
+
+  - abuseConfidenceScore
+  - countryCode
+  - date
+  - domain
+  - hostnames
+  - ipAddress
+  - ipVersion
+  - isPublic
+  - isWhitelisted
+  - isp
+  - lastReportedAt
+  - numDistinctUsers
+  - totalReports
+  - url
+  - usageType
+
 Screenshots
 #################
 
