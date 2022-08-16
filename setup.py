@@ -13,7 +13,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url="https://github.com/streanger/abuseipdb-wrapper",
-    packages=['abuseipdb-wrapper', ],
+    packages=['abuseipdb_wrapper', ],
     python_requires=">=3.5",
     license='MIT',
     install_requires=['requests', 'rich', 'pandas', 'openpyxl', 'Jinja2'],
