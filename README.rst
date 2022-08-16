@@ -125,8 +125,6 @@ Todo/to think of
 
 - wrap text in table columns (not only cut off with dots)
 
-- add last_checked column with containing timestamp
-
 - allow for justify/center table
 	
 - allow for db sorting (specified by user)
@@ -151,3 +149,5 @@ Implemented
 - wrap text in table cells - made using rich table
 
 - return dataframe object
+
+- date of last check
