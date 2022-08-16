@@ -31,7 +31,7 @@ Example usage
 
 - **init `AbuseIPDB` object**
  
-  Init AbuseIPDB object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended becasue this project aims on storing data for further quick access without need of another requests.
+  Init ``AbuseIPDB`` object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended becasue this project aims on storing data for further quick access without need of another requests.
 	
   .. code-block:: python
 
@@ -43,7 +43,7 @@ Example usage
 	
 - **check list of IP's**
     
-  Specify list of IP's to check and apply them using `add_ip_list` method. Next step run `check` method and wait.
+  Specify list of IP's to check and apply them using ``add_ip_list`` method. Next step run ``check`` method and wait.
     
   .. code-block:: python
 
@@ -53,7 +53,7 @@ Example usage
 	
 - **show local db**
     
-  To display collected information use `show_db` call. Data table should be displayed on terminal. Alternatively call `print` on your `AbuseIPDB` object. Before showing db you can specifiy columns to be displayed. Do it using `apply_columns_order` method.
+  To display collected information use ``show_db`` call. Data table should be displayed on terminal. Alternatively call ``print`` on your ``AbuseIPDB`` object. Before showing db you can specifiy columns to be displayed. Do it using ``apply_columns_order`` method.
 	
   .. code-block:: python
 
@@ -65,7 +65,7 @@ Example usage
 	
 - **db viewer**
     
-  For interactive viewing of IP's and checking them as well use `viewer` method. It let you to provide list of IP's or single one. Use help for more information.
+  For interactive viewing of IP's and checking them as well use ``viewer`` method. It let you to provide list of IP's or single one. Use help for more information.
     
   .. code-block:: python
 
@@ -98,25 +98,27 @@ Example usage
 Screenshots
 #################
 
+colors legend
+
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-legend.png
 
-----
+interactive viewer help
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-help-view.png
 
-----
+checking IPs 
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-live-check.png
 
-----
+showing IPs in vertical mode
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-vertical-view.png
 
----
+showing IPs in table mode
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-table-view.png
 
-Todo
+Todo/to think of
 #################
 
 - black background for better view in powershell
@@ -125,7 +127,7 @@ Todo
 
 - add last_checked column with containing timestamp
 
-- allow for justify/center table (consider)
+- allow for justify/center table
 	
 - allow for db sorting (specified by user)
 
@@ -133,7 +135,7 @@ Todo
 
 - IP ranges for viewer -> 1.2.3.0/24
 
-- make console script (consider)
+- make console script
 	
 - think of more info than 'data' section in api response: reports -> comments, categories
 	
