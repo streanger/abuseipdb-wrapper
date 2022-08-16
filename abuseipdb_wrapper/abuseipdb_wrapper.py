@@ -615,21 +615,40 @@ class AbuseIPDB:
         return None
 
 
-def style_df(x):
-    """style dataframe series"""
-    # ***** color style *****
-    # lightred = '#ffcccb'  # almost pink, too light
-    lightred = '#eb4034'
-    yellow = '#ffcc7a'  # or closer to orange
-    lightgreen = 'lightgreen'
+def style_df(x, green=None, orange=None, red=None):
+    """style dataframe series
     
+    colors level:
+        level <= 20       - green
+        20 < level <= 50  - orange
+        50 < level        - red
+        
+    colors default value:
+        green   - #4cf58c
+        orange  - #f5cd4c
+        red     - #f54c4c
+        
+    TODO:
+        -allow passing arguments from abuse class level
+        
+    """
+    # ***** color style *****
+    if green is None:
+        green = '4cf58c'
+        
+    if orange is None:
+        orange = '#f5cd4c'
+        
+    if red is None:
+        red = '#f54c4c'
+        
     # add many levels
     if x["abuseConfidenceScore"] > 50:
-        bg_style = ["background-color: {}".format(lightred)]
+        bg_style = ["background-color: {}".format(red)]
     elif 20 < x["abuseConfidenceScore"] <= 50:
-        bg_style = ["background-color: {}".format(yellow)]
+        bg_style = ["background-color: {}".format(orange)]
     else:
-        bg_style = ["background-color: {}".format(lightgreen)]
+        bg_style = ["background-color: {}".format(green)]
 
     # ***** other styles *****
     other_styles = ["text-align:right"]

@@ -141,6 +141,8 @@ Todo/to think of
 	
 - check subnet 1.2.3.4/24 -> https://www.abuseipdb.com/check-block/1.2.3.4/24
 
+- allow passing arguments (colors) for style_df function from abuse class level
+
 Implemented
 #################
 
