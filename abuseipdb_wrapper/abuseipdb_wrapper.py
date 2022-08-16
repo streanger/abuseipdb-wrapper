@@ -634,7 +634,7 @@ def style_df(x, green=None, orange=None, red=None):
     """
     # ***** color style *****
     if green is None:
-        green = '4cf58c'
+        green = '#4cf58c'
         
     if orange is None:
         orange = '#f5cd4c'
