@@ -105,6 +105,14 @@ class AbuseIPDB:
             matched = self._ip_database
         return matched
 
+    def get_df(self, matched_only=None):
+        """return dataframe object"""
+        if matched_only is None:
+            matched_only = self._matched_only
+        matched = self.get_db(matched_only)
+        df = pd.DataFrame(matched.values())
+        return df
+
     def clear_ip_list(self):
         """clear internal ip list"""
         self._ip_list = []
@@ -610,13 +618,18 @@ class AbuseIPDB:
 def style_df(x):
     """style dataframe series"""
     # ***** color style *****
+    # lightred = '#ffcccb'  # almost pink, too light
+    lightred = '#eb4034'
+    yellow = '#ffcc7a'  # or closer to orange
+    lightgreen = 'lightgreen'
+    
     # add many levels
     if x["abuseConfidenceScore"] > 50:
-        bg_style = ["background-color: #ffcccb"]  # lightred
+        bg_style = ["background-color: {}".format(lightred)]
     elif 20 < x["abuseConfidenceScore"] <= 50:
-        bg_style = ["background-color: #ffcc7a"]  # yellow
+        bg_style = ["background-color: {}".format(yellow)]
     else:
-        bg_style = ["background-color: lightgreen"]
+        bg_style = ["background-color: {}".format(lightgreen)]
 
     # ***** other styles *****
     other_styles = ["text-align:right"]

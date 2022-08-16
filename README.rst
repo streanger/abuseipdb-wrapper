@@ -1,9 +1,9 @@
-*****************
+*********************
 abuseipdb-wrapper
-*****************
+*********************
 
 Info
-#######
+#################
 
 - python wrapper for abuseipdb API -> https://docs.abuseipdb.com/#introduction
 
@@ -12,20 +12,22 @@ Info
 - aimed to local db usage, quick query and response
 
 Install
-#######
+#################
+
+stable version from pypi
 
 .. code-block:: python
 
     pip install abuseipdb-wrapper
 
-or
+or newest version from github
 
 .. code-block:: python
 
-    pip install git+https://github.com/streanger/abuseipdb_wrapper.git
+    pip install git+https://github.com/streanger/abuseipdb-wrapper.git
 	
 Example usage
-#############
+#################
 
 - **init `AbuseIPDB` object**
  
@@ -87,52 +89,61 @@ Example usage
     
     abuse.export_xlsx_styled('out.xlsx', matched_only=False)
  
-Screenshots
-###########
-
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/colors_legend.png
-
-----
-
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/check_example.png
-
-----
-
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/viewer_example1.png
-
-----
-
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb_wrapper/main/screenshots/viewer_example2.png
-
-Update/Todo
-###########
-
-
-
-todo/think of (25.06.2022)
-****************************
-
-- html output (from rich table or from pandas df)
+- **convert to dataframe object**
  
+  .. code-block:: python
+    
+    df = abuse.get_df(matched_only=False)
+	
+Screenshots
+#################
+
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-legend.png
+
+----
+
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-help-view.png
+
+----
+
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-live-check.png
+
+----
+
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-vertical-view.png
+
+---
+
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-table-view.png
+
+Todo
+#################
+
 - black background for better view in powershell
 
 - wrap text in table columns (not only cut off with dots)
- 
-todo/think of
-****************************
 
 - add last_checked column with containing timestamp
-	
-- wrap text in table cells (juster/justify modification needed)
-	
+
 - allow for justify/center table (consider)
 	
 - allow for db sorting (specified by user)
-	
+
+- implement more methods accessible from interactive view
+
 - IP ranges for viewer -> 1.2.3.0/24
-	
+
 - make console script (consider)
 	
 - think of more info than 'data' section in api response: reports -> comments, categories
 	
 - check subnet 1.2.3.4/24 -> https://www.abuseipdb.com/check-block/1.2.3.4/24
+
+Implemented
+#################
+
+- html output (from rich table or from pandas df)
+
+- wrap text in table cells - made using rich table
+
+- return dataframe object

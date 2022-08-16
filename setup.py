@@ -4,7 +4,7 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
     
 setuptools.setup(
-    name='abuseipdb_wrapper',
+    name='abuseipdb-wrapper',
     version='0.1.3',
     keywords="abuseipdb abuse ip",
     author="streanger",
@@ -12,11 +12,11 @@ setuptools.setup(
     description="python wrapper for abuseipdb API",
     long_description=long_description,
     long_description_content_type="text/x-rst",
-    url="https://github.com/streanger/abuseipdb_wrapper",
-    packages=['abuseipdb_wrapper', ],
+    url="https://github.com/streanger/abuseipdb-wrapper",
+    packages=['abuseipdb-wrapper', ],
     python_requires=">=3.5",
     license='MIT',
-    install_requires=['requests', 'rich', 'pandas', 'openpyxl'],
+    install_requires=['requests', 'rich', 'pandas', 'openpyxl', 'Jinja2'],
     include_package_data=False,
     package_data={
     },
