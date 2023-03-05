@@ -421,7 +421,7 @@ class AbuseIPDB:
             elif query == 'export':
                 if rest:
                     file_format = rest[0]
-                    directory = Path(self._db_file or '.').parent
+                    directory = Path(self._db_file or '.').parent.absolute()
                     if file_format == 'csv':
                         filename = directory.joinpath('abuse.csv')
                         self.export_csv(filename)
