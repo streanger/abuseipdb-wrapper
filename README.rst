@@ -7,9 +7,9 @@ Info
 
 - python wrapper for abuseipdb API -> https://docs.abuseipdb.com/#introduction
 
-- allows you to get info about specified IP address(es) abuse
+- allows you to get info about specified IP addresses abuse level
  
-- aimed to local db usage, quick query and response
+- focused on local db caching and viewing
 
 Install
 #################
@@ -31,15 +31,14 @@ Example usage
 
 - **init `AbuseIPDB` object**
  
-  Init ``AbuseIPDB`` object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended becasue this project aims on storing data for further quick access without need of another requests.
+  Init ``AbuseIPDB`` object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended becasue this project focuses on storing data for further quick access without need of another requests.
 	
   .. code-block:: python
 
     from abuseipdb_wrapper import AbuseIPDB
     API_KEY = 'YOUR_API_KEY'
-    # provide API KEY and local db filename
     abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')
-    abuse.colors_legend()  # show colors legend
+    abuse.colors_legend()
 	
 - **check list of IP's**
     
@@ -50,27 +49,50 @@ Example usage
     ips = ['1.2.3.4', '5.6.7.8', '9.10.11.12', '13.14.15.16']
     abuse.add_ip_list(ips)
     abuse.check()
-	
+    abuse.tor_info_enrich()  # new feature from v.0.1.7
+                             # get info about tor exit nodes
+
+- **no db caching approach**
+
+  If you are not interested in caching data in local database and only want to request for IP addresses one by one use the following code.
+  Have in mind that `.check_ip` method enriches results and removes `reports` section
+  If using wrapper is like overkill in your project, go to: https://docs.abuseipdb.com/?python#check-endpoint
+
+  .. code-block:: python
+
+    from abuseipdb_wrapper import AbuseIPDB
+    API_KEY = 'YOUR_API_KEY'
+    abuse = AbuseIPDB(API_KEY=API_KEY)
+    ips = ['1.2.3.4', '2.3.4.5', '3.4.5.6']
+    for IP in ips:
+        result = abuse.check_ip()  # enriched with url and request time
+        result = abuse.check_ip_orig()  # results in original form
+        print(result)
+
 - **show local db**
     
   To display collected information use ``show_db`` call. Data table should be displayed on terminal. Alternatively call ``print`` on your ``AbuseIPDB`` object. Before showing db you can specifiy columns to be displayed. Do it using ``apply_columns_order`` method.
 	
   .. code-block:: python
 
-    abuse.apply_columns_order(
-	    ['ipAddress', 'abuseConfidenceScore', 'totalReports', 'countryCode', 'domain', 'isp']
-	    )
+    columns = ['ipAddress', 'abuseConfidenceScore', 'totalReports', 'countryCode', 'domain', 'isp']
+    abuse.apply_columns_order(columns)
+    # show db by print or using .show_db method
     print(abuse)
     abuse.show_db(matched_only=False, table_view=True)
-	
+
 - **db viewer**
     
-  For interactive viewing of IP's and checking them as well use ``viewer`` method. It let you to provide list of IP's or single one. Use help for more information.
-    
+  For interactive IPs check and use ``.viewer`` method. It let you to provide list of IP's or single one. Use help for more information.
+  
   .. code-block:: python
 
     abuse.viewer()
-	
+    # commands inside interactive view
+    columns [columns list]  # shows or apply columns order
+    export [csv, html, xlsx]  # export to file
+    all  # show all database
+
 - **export db to csv file**
  
   .. code-block:: python
@@ -94,7 +116,7 @@ Example usage
   .. code-block:: python
     
     df = abuse.get_df(matched_only=False)
-	
+
 - **json columns**
 
   - abuseConfidenceScore
@@ -112,6 +134,7 @@ Example usage
   - totalReports
   - url
   - usageType
+  - isTorNode
 
 Screenshots
 #################
@@ -136,36 +159,39 @@ showing IPs in table mode
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-table-view.png
 
-Todo/to think of
+Ideas
 #################
-
-- black background for better view in powershell
 
 - wrap text in table columns (not only cut off with dots)
 
 - allow for justify/center table
-	
-- allow for db sorting (specified by user)
 
-- implement more methods accessible from interactive view
+- allow for db sorting (specified by user)
 
 - IP ranges for viewer -> 1.2.3.0/24
 
-- make console script
-	
 - think of more info than 'data' section in api response: reports -> comments, categories
-	
+
 - check subnet 1.2.3.4/24 -> https://www.abuseipdb.com/check-block/1.2.3.4/24
 
 - allow passing arguments (colors) for style_df function from abuse class level
 
-Implemented
+Changelog
 #################
 
-- html output (from rich table or from pandas df)
+- `v.0.1.7`:
 
-- wrap text in table cells - made using rich table
+  - columns command in interactive view
+  - export command in interactive view (to .csv, .html, .xlsx)
+  - `abuse` entrypoint
+  - tor exit nodes enrichment
+  - storing files in users home directory
+  - original API request -> `.check_ip_orig`
 
-- return dataframe object
+- `v.0.1.6` and before:
 
-- date of last check
+  - black background for better view in powershell
+  - html output (from rich table or from pandas df)
+  - wrap text in table cells - made using rich table
+  - return dataframe object
+  - date of last check

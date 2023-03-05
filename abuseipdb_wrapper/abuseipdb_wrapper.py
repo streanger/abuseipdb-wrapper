@@ -1,34 +1,37 @@
 import os
+from pathlib import Path
 import re
 import json
+import random
 import datetime
 import ipaddress
+# from string import ascii_letters
+
+# 3rd party modules
 import requests
 import pandas as pd
-from rich import box
-from rich import print
-from rich.table import Table
+from rich import box, print
 from rich.text import Text
+from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.console import Console
 from rich.columns import Columns
 from pandas.io.formats.style import Styler
 
+# my modules
+from abuseipdb_wrapper.tor_enrich import get_tor_exit_nodes
+
 
 class AbuseIPDB:
     """abuseipdb api wrapper"""
-
-    def __init__(self, API_KEY=None, ip_list=None, db_file=None, verbose=None):
-        if API_KEY is None:
-            raise ValueError("[red][-] no API_KEY specified")
+    def __init__(self, API_KEY, ip_list=None, db_file=None, verbose=None):
         self._API_KEY = API_KEY
-
         if ip_list is None:
             ip_list = []
         valid_list = self.assert_ip_list(ip_list)
         self._ip_list = valid_list
-        self.__regular_items = [
+        self._regular_items = [
             "abuseConfidenceScore",
             "countryCode",
             "domain",
@@ -41,9 +44,10 @@ class AbuseIPDB:
             "lastReportedAt",
             "numDistinctUsers",
             "totalReports",
-            "url",
+            "url",  # additional (abuseipdb related url)
             "usageType",
-            "date",
+            "date",  # additional (date of request)
+            "isTorNode",  # additional; requires tor enrich
         ]
         self._table_columns_order = [
             "ipAddress",
@@ -121,7 +125,7 @@ class AbuseIPDB:
     def assert_ip_list(self, ip_list):
         """if not valid, throw error"""
         if type(ip_list) not in (list, tuple):
-            print("[red][-] ip_list should be type of list or tuple")
+            print("[red]\[-] ip_list should be type of list or tuple")
             raise TypeError
 
         valid_list = []
@@ -130,41 +134,70 @@ class AbuseIPDB:
                 valid_ip = str(ipaddress.ip_address(item))
                 if valid_ip != item:
                     if self.verbose:
-                        print("[cyan][*] conversion: {} -> {}".format(item, valid_ip))
+                        print("[cyan]\[*] conversion: {} -> {}".format(item, valid_ip))
                 valid_list.append(valid_ip)
 
             except ValueError as err:
                 if self.verbose:
-                    print("[red][-] not valid IP address: {}".format(item))
+                    print("[red]\[-] not valid IP address: {}".format(item))
                 # raise  # re-throw exception; it may not be needed
         return valid_list
 
-    def check_ip(self, ip, max_age_in_days="90"):
-        """check IP(ip) abuse using abuseipdb.com
-        typically errors:
-            {'errors': [{'detail': 'Daily rate limit of 1000 requests exceeded for this endpoint. See headers for additional details.', 'status': 429}]}
-            {'errors': [{'detail': 'The ip address must be a valid IPv4 or IPv6 address (e.g. 8.8.8.8 or 2001:4860:4860::8888).', 'status': 422, 'source': {'parameter': 'ipAddress'}}]}
-            {'errors': [{'detail': 'Authentication failed. Your API key is either missing, incorrect, or revoked. Note: The APIv2 key differs from the APIv1 key.', 'status': 401}]}
+    def check_ip_orig(self, ip, max_age_in_days="90", verbose=False):
+        """checks IP abuse using abuseipdb.com in original manner
+
+        docs: https://docs.abuseipdb.com/?python#check-endpoint
+        from docs:
+            Omitting the verbose flag will exclude reports and the country name field.
+            If you want to keep your response payloads light, this is recommended. 
         """
         # ********* Defining the api-endpoint *********
         url = "https://api.abuseipdb.com/api/v2/check"
-        querystring = {"ipAddress": ip, "maxAgeInDays": max_age_in_days}
-        headers = {"Accept": "application/json", "Key": self._API_KEY}
+        # IMPORTANT:
+        #   including verbose flag in querystring will casue including reports
+        #   (as well as country name) in response no matter of True/False
+        #   so have it in mind
+        if verbose:
+            querystring = {
+                "ipAddress": ip,
+                "maxAgeInDays": max_age_in_days,
+                "verbose": verbose,
+                }
+        else:
+            querystring = {
+                "ipAddress": ip,
+                "maxAgeInDays": max_age_in_days,
+                }
+        headers = {
+            "Accept": "application/json",
+            "Key": self._API_KEY
+            }
         response = requests.request(
             method="GET", url=url, headers=headers, params=querystring
         )
 
         # ********* Formatted output *********
         decoded = json.loads(response.text)
+        return decoded
+
+    def check_ip(self, ip, max_age_in_days="90"):
+        """checks IP abuse using abuseipdb.com and adds url & date fields and removes reports
+
+        docs: https://docs.abuseipdb.com/?python#check-endpoint
+        typically errors:
+            {'errors': [{'detail': 'Daily rate limit of 1000 requests exceeded for this endpoint. See headers for additional details.', 'status': 429}]}
+            {'errors': [{'detail': 'The ip address must be a valid IPv4 or IPv6 address (e.g. 8.8.8.8 or 2001:4860:4860::8888).', 'status': 422, 'source': {'parameter': 'ipAddress'}}]}
+            {'errors': [{'detail': 'Authentication failed. Your API key is either missing, incorrect, or revoked. Note: The APIv2 key differs from the APIv1 key.', 'status': 401}]}
+        """
+        decoded = self.check_ip_orig(ip, max_age_in_days)
         errors_status = decoded.get("errors", False)
         if errors_status:
             print("[red]    [-] API errors_status: {}".format(errors_status))
             raise ValueError("AbuseIPDB API error")
         data = decoded["data"]
-        url = "https://www.abuseipdb.com/check/{}".format(ip)
-        data["url"] = url
-        now = self._timestamp()
-        data["date"] = now
+        data["url"] = "https://www.abuseipdb.com/check/{}".format(ip)
+        data["date"] = self._timestamp()
+        data["isTorNode"] = ''
         return data
 
     def __log_table(self, table):
@@ -276,27 +309,27 @@ class AbuseIPDB:
         """apply new columns order for show_db"""
         if not type(order) in (list, tuple):
             print(
-                "[red][-] order should be list or tuple type; type(order): {}".format(
+                "[red]\[-] order should be list or tuple type; type(order): {}".format(
                     type(order)
                 )
             )
             return False
 
         for item in order:
-            if not item in self.__regular_items:
-                print("[red][-] wrong item in columns order: {}".format(item))
+            if not item in self._regular_items:
+                print("[red]\[-] wrong item in columns order: {}".format(item))
                 return False
         self._table_columns_order = order
         return None
 
     def get_default_columns(self):
         """show json columns (keys) for user to know the order"""
-        return self.__regular_items
+        return self._regular_items
 
     def toggle_view(self):
         """switch db view -> vertical/table; main purpose is .viewer method, which uses __str__"""
         self.table_view = not self.table_view
-        print("[cyan][*] self.table_view:[/cyan] {}".format(self.table_view))
+        print("[cyan]\[*] self.table_view:[/cyan] {}".format(self.table_view))
         return None
 
     def _viewer_help(self):
@@ -308,6 +341,12 @@ class AbuseIPDB:
             "[green_yellow]    view         - toggle table view",
             "[green_yellow]    live         - check IP live if not in db",
             "[green_yellow]    all          - show all IP's from db",
+            "[green_yellow]    path         - shows path to .db file",
+            "[green_yellow]    columns \[columns list]",
+            "[green_yellow]                 - shows or apply columns order",
+            "[green_yellow]    export \[csv, html, xlsx]",
+            "[green_yellow]                 - export to file",
+            "[green_yellow]    tor          - enrich info about tor node",
         ]
         lines_joined = "\n".join(help_lines)
         legend = Columns(
@@ -328,9 +367,10 @@ class AbuseIPDB:
                 print()
                 continue
 
-            query = query.strip()
-            if not query:
+            full_query = query.strip()
+            if not full_query:
                 continue
+            query, *rest = full_query.split()
 
             # ********* execute command *********
             if query in ("exit", "quit"):
@@ -346,19 +386,68 @@ class AbuseIPDB:
                 continue
             elif query == "live":
                 check_live = not check_live
-                print("[cyan][*] check_live:[/cyan] {}".format(check_live))
+                print("[cyan]\[*] check_live:[/cyan] {}".format(check_live))
                 continue
             elif query == "help":
                 self._viewer_help()
                 continue
             elif query == "all":
-                query = " ".join(list(self._ip_database.keys()))
+                # IMPORTANT: modify full_query, not query
+                full_query = " ".join(list(self._ip_database.keys()))
+            elif query == "path":
+                print("[cyan]\[*] db file:[/cyan] {}".format(self._db_file))
+                continue
+            elif query == 'columns':
+                if rest:
+                    # filter out strings which are not ascii_letters
+                    # rest = [item for item in rest if set(item).issubset(set(ascii_letters))]
+                    rest = [item for item in rest if item in self._regular_items]
+                    self.apply_columns_order(rest)
+                else:
+                    # show current columns order
+                    regular = self._regular_items.copy()
+                    current_order = {item:True for item in self._table_columns_order}
+                    not_used_order = {item:False for item in regular if not item in self._table_columns_order}
+                    current_order.update(not_used_order)
+                    print(current_order)
+                    print('[cyan]\[*] availabe columns:[/cyan] {}'.format(' '.join(self._regular_items)))
+                continue
+            elif query == 'export':
+                if rest:
+                    file_format = rest[0]
+                    directory = Path(self._db_file or '.').parent
+                    if file_format == 'csv':
+                        filename = directory.joinpath('abuse.csv')
+                        self.export_csv(filename)
+                    elif file_format == 'html':
+                        filename = directory.joinpath('abuse.html')
+                        self.export_html_styled(filename)
+                    elif file_format == 'xlsx':
+                        filename = directory.joinpath('abuse.xlsx')
+                        self.export_xlsx_styled(filename)
+                    else:
+                        print("[cyan]\[x] unrecognized; choose from: <csv>, <html>, <xlsx>")
+                        continue
+                    print("[cyan]\[*] saved to:[/cyan] {}".format(filename))
+                else:
+                    print("[cyan]\[x] no file format specfied")
+                continue
+            elif query == 'tor':
+                enrich = False
+                for value in self._ip_database.values():
+                    if value.get('isTorNode', '') == '':
+                        enrich = True
+                        break
+                if enrich:
+                    # enrich informations about tor exit nodes
+                    self.tor_info_enrich()
+                continue
             else:
                 pass
 
             # ********* execute query *********
             self.clear_ip_list()
-            ips_query = [item.strip("\"' ") for item in re.split(",| |;", query)]
+            ips_query = [item.strip("\"' ") for item in re.split(",| |;", full_query)]
             ips_query = [item for item in ips_query if item]
             self.add_ip_list(ips_query)
             if not self._ip_list:
@@ -384,6 +473,14 @@ class AbuseIPDB:
             print(self._db_str(matched_only=True))
         return None
 
+    def tor_info_enrich(self):
+        """get info about tor exit nodes"""
+        tor_exit_nodes = get_tor_exit_nodes()
+        for key in self._ip_database.keys():
+            self._ip_database[key]['isTorNode'] = (key in tor_exit_nodes)
+        print("[cyan]\[*] tor exit nodes info enriched")
+        self.update_local_db()
+
     def add_ip_list(self, ip_list):
         """add list of IP's to current check"""
         valid_list = self.assert_ip_list(ip_list)
@@ -402,17 +499,13 @@ class AbuseIPDB:
         return color
 
     def check(self, force_new=False):
-        """iterate over collected IP list
-        -think of input/output
-        """
+        """iterate over collected IP list"""
         number_of_ip = len(self._ip_list)
         if not number_of_ip:
-            print(
-                "[cyan][*] please add some ip_list for check -> .add_ip_list(ip_list)"
-            )
+            print("[cyan]\[*] add some IPs for check -> .add_ip_list(ip_list)")
             return None
 
-        print("[cyan][*] iteration starts")
+        print("[cyan]\[*] iteration starts")
         for index, ip in enumerate(self._ip_list):
             try:
                 ip = str(ip)
@@ -466,15 +559,19 @@ class AbuseIPDB:
                 print()
 
         # ********* update db file if provided *********
+        self.update_local_db()
+        return None
+
+    def update_local_db(self):
+        """update local db with handling None file and verbose"""
         if self._db_file is not None:
             self._write_json(self._db_file, self._ip_database)
             if self.verbose:
                 print(
-                    "[cyan][*] data saved to file:[/cyan] [green_yellow]{}".format(
+                    "[cyan]\[*] data saved to file:[/cyan] [green_yellow]{}".format(
                         self._db_file
                     )
                 )
-        return None
 
     def __str__(self):
         """print as show_db with matched_only and table_view"""
@@ -501,16 +598,15 @@ class AbuseIPDB:
 
     @staticmethod
     def _timestamp():
-        """generate timestamp in string format
-        FOR FURTHER USE
-        """
+        """generate timestamp in string format"""
         out = str(datetime.datetime.now())
         return out
 
     @staticmethod
     def _timestamp_to_datetime(str_timestamp):
         """convert string timestamp to datetime type
-        FOR FURTHER USE
+
+        TODO: use it to set cache time and request again if elapsed
         """
         out = datetime.datetime.strptime(str_timestamp, "%Y-%m-%d %H:%M:%S.%f")
         # ~ out = datetime.datetime.strptime(str_timestamp, '%Y-%m-%d %H:%M:%S')
@@ -519,7 +615,8 @@ class AbuseIPDB:
     @staticmethod
     def _unix_to_datetime(unix_time):
         """convert unix to datetime
-        FOR FURTHER USE
+
+        TODO: use it to set cache time and request again if elapsed
         """
         out = datetime.datetime.fromtimestamp(unix_time)
         return out
@@ -589,7 +686,7 @@ class AbuseIPDB:
             html = styled.to_html(render_links=True, escape=False)
             self._write_file(filename, html)
 
-        print("[cyan][*] data saved to file:[/cyan] [green_yellow]{}".format(filename))
+        print("[cyan]\[*] data saved to file:[/cyan] [green_yellow]{}".format(filename))
         return None
 
     def export_xlsx_styled(self, filename, matched_only=None):
@@ -611,7 +708,7 @@ class AbuseIPDB:
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
         df.to_csv(filename, encoding="utf-8")
-        print("[cyan][*] data saved to file:[/cyan] [green_yellow]{}".format(filename))
+        print("[cyan]\[*] data saved to file:[/cyan] [green_yellow]{}".format(filename))
         return None
 
 
@@ -628,9 +725,7 @@ def style_df(x, green=None, orange=None, red=None):
         orange  - #f5cd4c
         red     - #f54c4c
         
-    TODO:
-        -allow passing arguments from abuse class level
-        
+    TODO: allow passing arguments from abuse class level
     """
     # ***** color style *****
     if green is None:
@@ -691,9 +786,82 @@ def apply_style(df):
     return styled
 
 
+def get_abuse_directory():
+    """create and return a folder in the user's home directory"""
+    home_directory = Path.home()
+    config_directory = home_directory.joinpath("abuse")
+    config_directory.mkdir(exist_ok=True)
+    return config_directory
+
+
+def abuse_banner():
+    """abuse cli logo
+
+    pip install art
+    from art import *
+    for font in ASCII_FONTS:
+        art = text2art('abuseipdb-wrapper', font=font)
+        print(font)
+        print(art)
+        input()
+    """
+    logo = """
+            _                        _             _  _
+           | |                      (_)           | || |
+      __ _ | |__   _   _  ___   ___  _  _ __    __| || |__
+     / _` || '_ \ | | | |/ __| / _ \| || '_ \  / _` || '_ \ 
+    | (_| || |_) || |_| |\__ \|  __/| || |_) || (_| || |_) |
+     \__,_||_.__/  \__,_||___/ \___||_|| .__/  \__,_||_.__/ 
+          __      __ _ __   __ _  _ __ | |___    ___  _ __
+          \ \ /\ / /| '__| / _` || '_ \|_|'_ \  / _ \| '__|
+           \ V  V / | |   | (_| || |_) || |_) ||  __/| |
+            \_/\_/  |_|    \__,_|| .__/ | .__/  \___||_|
+                                 | |    | |
+                                 |_|    |_|
+    """
+
+    pypi_url = 'https://pypi.org/project/abuseipdb-wrapper/'
+    github_url = 'https://github.com/streanger/abuseipdb-wrapper'
+    pip = 'pip install abuseipdb-wrapper'
+    horizontal = "================================================================"
+    styles = [
+        "rgb(191,66,245)",
+        "rgb(66,245,93)",
+        "rgb(245,242,66)",
+        "rgb(245,66,233)",
+        "rgb(66,236,245)",
+        "rgb(66,66,245)",
+        "rgb(84,245,66)",
+        "rgb(245,66,66)",
+        "rgb(128,82,235)",
+    ]
+    style = random.choice(styles)
+    console = Console()
+    console.print(logo, highlight=False, style=style)
+    print('home: {}'.format(github_url))
+    print(' pip: [cyan]{}[/cyan]'.format(pip))
+    print(horizontal)
+    print()
+
+
 def main():
-    """entry point for script mode; TODO"""
-    return None
+    """main entrypoint"""
+    abuse_banner()
+    abuse_directory = get_abuse_directory()
+    db_file = abuse_directory.joinpath("abuseipdb.json")
+    api_key_file = abuse_directory.joinpath('api.txt')
+    try:
+        API_KEY = api_key_file.read_text()
+        print('[cyan]\[*] using API_KEY from: {}'.format(api_key_file))
+    except FileNotFoundError:
+        API_KEY = Prompt.ask("[cyan]\[>] put your API KEY ").strip()
+        if not API_KEY:
+            print('[yellow]\[x] API_KEY not provided')
+            return False
+        api_key_file.write_text(API_KEY)
+        print('[cyan]\[*] API_KEY saved to: {}'.format(api_key_file))
+    abuse = AbuseIPDB(API_KEY, db_file=db_file)
+    abuse.viewer()
 
 
 if __name__ == "__main__":
@@ -702,8 +870,7 @@ if __name__ == "__main__":
     abuse = AbuseIPDB(API_KEY=API_KEY, db_file="abuseipdb.json")
 
     # ********* local db view *********
-    abuse.apply_columns_order(
-        [
+    columns = [
             "ipAddress",
             "abuseConfidenceScore",
             "totalReports",
@@ -713,67 +880,6 @@ if __name__ == "__main__":
             "date",
             "url",
         ]
-    )
+    abuse.apply_columns_order(columns)
     abuse.colors_legend()
     abuse.viewer()
-
-"""
-https://stackoverflow.com/questions/1301346/what-is-the-meaning-of-single-and-double-underscore-before-an-object-name
-https://medium.com/linkit-intecs/how-to-build-a-small-command-line-interface-to-store-and-retrieve-data-with-python-database-d6596caff2bf
-https://stackoverflow.com/questions/319279/how-to-validate-ip-address-in-python
-https://stackoverflow.com/questions/14671487/what-is-the-difference-in-python-attributes-with-underscore-in-front-and-back
-https://stackoverflow.com/questions/1535327/how-to-print-instances-of-a-class-using-print
-https://nedbatchelder.com/blog/200711/rethrowing_exceptions_in_python.html
-https://stackoverflow.com/questions/6505008/dictionary-keys-match-on-list-get-key-value-pair
-https://github.com/foutaise/texttable/
-https://dev.to/paulshuvo/blessedtable-a-python-package-for-building-colorful-formatted-ascii-tables-45np
-https://pypi.org/project/blessedtable/
-https://appdividend.com/2022/02/15/how-to-split-string-with-multiple-delimiters-in-python/
-https://docs.abuseipdb.com/?python#check-endpoint
-https://stackoverflow.com/questions/3086973/how-do-i-convert-this-list-of-dictionaries-to-a-csv-file
-https://stackoverflow.com/questions/41983209/how-do-i-add-images-to-a-pypi-readme-that-works-on-github
-https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/
-https://stackoverflow.com/questions/55597797/detect-whether-current-shell-is-powershell-in-python
-https://stackoverflow.com/questions/24870306/how-to-check-if-a-column-exists-in-pandas
-
-legend:
-    [*] cyan    - information
-    [+] green   - things made fine; low level of abuse
-    [x] yellow  - warning; medium level of abuse
-    [-] red     - errors; high level of abuse
-    [!] magenta - unexpected things happened
-    
-todo:
-    -add last_checked column with time
-    -wrap text in table cells (juster modification)
-    -show_db - vertical view  (+)
-    -check method with regular input and output
-    -move whole table to center by spaces (consider)
-    -allow for db sorting (by user specify)
-    -abuseipdb url -> https://www.abuseipdb.com/check/1.2.3.4
-    -ip sorter (+)
-    -viewer (+)
-    -IP ranges for viewer -> 1.2.3.0/24
-    -make console script
-    -think of more info than 'data' section in response: reports -> comments, categories
-    
-example:
-    1.2.3.4, 5.6.7.8, 9.10.11.12, 13.14.15.16
-    
-classes:
-    variable    - global attribute
-    _variable   - private attribute
-    __variable  - very private attribute
-    
-valid_ip attributes:
-    valid_ip.is_global
-    valid_ip.is_link_local
-    valid_ip.is_loopback
-    valid_ip.is_private
-    valid_ip.is_multicast
-    valid_ip.is_reserved
-    valid_ip.is_unspecified
-    valid_ip.reverse_pointer
-    valid_ip.version
-    
-"""
