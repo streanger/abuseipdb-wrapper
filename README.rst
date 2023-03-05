@@ -3,7 +3,7 @@ abuseipdb-wrapper
 *********************
 
 Info
-#################
+###########################
 
 - python wrapper for abuseipdb API -> https://docs.abuseipdb.com/#introduction
 
@@ -12,7 +12,7 @@ Info
 - focused on local db caching and viewing
 
 Install
-#################
+###########################
 
 stable version from pypi
 
@@ -27,14 +27,14 @@ or newest version from github
     pip install git+https://github.com/streanger/abuseipdb-wrapper.git
 	
 Command-line usage
-#################
+###########################
 
 .. code-block:: bash
 
     abuse
 
 Python usage
-#################
+###########################
 
 - **init `AbuseIPDB` object**
  
@@ -144,7 +144,7 @@ Python usage
   - isTorNode  # additional
 
 Screenshots
-#################
+###########################
 
 cli entrypoint
 
@@ -171,7 +171,7 @@ showing IPs in table mode
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-table-view.png
 
 Ideas
-#################
+###########################
 
 - wrap text in table columns (not only cut off with dots)
 
@@ -190,7 +190,7 @@ Ideas
 - export html (from rich)
 
 Changelog
-#################
+###########################
 
 - `v.0.1.7`:
 
