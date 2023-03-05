@@ -187,6 +187,8 @@ Ideas
 
 - allow passing arguments (colors) for style_df function from abuse class level
 
+- export html (from rich)
+
 Changelog
 #################
 
@@ -203,7 +205,9 @@ Changelog
 - `v.0.1.6` and before:
 
   - black background for better view in powershell
-  - html output (from rich table or from pandas df)
+  - export to html (from pandas df)
+  - export to xlsx
+  - export to csv
   - wrap text in table cells - made using rich table
   - return dataframe object
   - date of last check
