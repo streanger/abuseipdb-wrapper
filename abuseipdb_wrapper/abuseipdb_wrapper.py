@@ -24,6 +24,11 @@ from pandas.io.formats.style import Styler
 from abuseipdb_wrapper.tor_enrich import get_tor_exit_nodes
 
 
+# consts
+YELLOW_LEVEL = 30
+RED_LEVEL = 80
+
+
 class AbuseIPDB:
     """abuseipdb api wrapper"""
     def __init__(self, API_KEY, ip_list=None, db_file=None, verbose=None):
@@ -348,6 +353,7 @@ class AbuseIPDB:
             "[green_yellow]    export \[csv, html, xlsx]   - export to file",
             "[green_yellow]    tor                        - enrich info about tor node",
             "[green_yellow]    key                        - change API_KEY",
+            "[green_yellow]    legend                     - colors legend",
         ]
         lines_joined = "\n".join(help_lines)
         legend = Columns(
@@ -446,6 +452,10 @@ class AbuseIPDB:
                 if API_KEY:
                     self._API_KEY = API_KEY
                     print("[cyan]\[*] new API_KEY assigned")
+                continue
+            elif query == 'legend':
+                self.colors_legend()
+                continue
             else:
                 pass
 
@@ -494,9 +504,9 @@ class AbuseIPDB:
     @staticmethod
     def _abuse_color(level):
         """set color depend on abuse level"""
-        if level > 80:
+        if level > RED_LEVEL:
             color = "red"
-        elif 30 <= level < 80:
+        elif YELLOW_LEVEL <= level < RED_LEVEL:
             color = "yellow"
         else:
             color = "green"
@@ -732,18 +742,13 @@ class AbuseIPDB:
 
 def style_df(x, green=None, orange=None, red=None):
     """style dataframe series
-    
-    colors level:
-        level <= 20       - green
-        20 < level <= 50  - orange
-        50 < level        - red
-        
+
     colors default value:
         green   - #4cf58c
         orange  - #f5cd4c
         red     - #f54c4c
-        
-    TODO: allow passing arguments from abuse class level
+
+    TODO: allow passing arguments from abuse class
     """
     # ***** color style *****
     if green is None:
@@ -756,9 +761,9 @@ def style_df(x, green=None, orange=None, red=None):
         red = '#f54c4c'
 
     # add many levels
-    if x["abuseConfidenceScore"] > 50:
+    if x["abuseConfidenceScore"] > RED_LEVEL:
         bg_style = ["background-color: {}".format(red)]
-    elif 20 < x["abuseConfidenceScore"] <= 50:
+    elif YELLOW_LEVEL < x["abuseConfidenceScore"] <= RED_LEVEL:
         bg_style = ["background-color: {}".format(orange)]
     else:
         bg_style = ["background-color: {}".format(green)]
