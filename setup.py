@@ -2,7 +2,7 @@ import setuptools
 from pathlib import Path
 
 long_description = Path("README.rst").read_text()
-# pip install requests rich pandas openpyxl Jinja2
+# pip install requests rich pandas openpyxl Jinja2 keyring
 requirements = Path('requirements.txt').read_text().splitlines()
 
 setuptools.setup(

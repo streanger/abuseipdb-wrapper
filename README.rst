@@ -7,8 +7,8 @@ Info
 
 - python wrapper for abuseipdb API -> https://docs.abuseipdb.com/#introduction
 
-- allows you to get info about specified IP addresses abuse level
- 
+- gives you informations about abuse level of specified IP addresses
+
 - focused on local db caching and viewing
 
 Install
@@ -16,17 +16,24 @@ Install
 
 stable version from pypi
 
-.. code-block:: python
+.. code-block:: bash
 
     pip install abuseipdb-wrapper
 
 or newest version from github
 
-.. code-block:: python
+.. code-block:: bash
 
     pip install git+https://github.com/streanger/abuseipdb-wrapper.git
 	
-Example usage
+Command-line usage
+#################
+
+.. code-block:: bash
+
+    abuse
+
+Python usage
 #################
 
 - **init `AbuseIPDB` object**
@@ -121,7 +128,7 @@ Example usage
 
   - abuseConfidenceScore
   - countryCode
-  - date
+  - date  # additional
   - domain
   - hostnames
   - ipAddress
@@ -132,12 +139,16 @@ Example usage
   - lastReportedAt
   - numDistinctUsers
   - totalReports
-  - url
+  - url  # additional
   - usageType
-  - isTorNode
+  - isTorNode  # additional
 
 Screenshots
 #################
+
+cli entrypoint
+
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/entrypoint.png
 
 colors legend
 
@@ -181,12 +192,13 @@ Changelog
 
 - `v.0.1.7`:
 
-  - columns command in interactive view
-  - export command in interactive view (to .csv, .html, .xlsx)
   - `abuse` entrypoint
+  - `columns` command in interactive view
+  - `export` command in interactive view (to .csv, .html, .xlsx)
   - tor exit nodes enrichment
-  - storing files in users home directory
+  - storing db file in user home directory
   - original API request -> `.check_ip_orig`
+  - getpass and keyring for API_KEY read & store
 
 - `v.0.1.6` and before:
 

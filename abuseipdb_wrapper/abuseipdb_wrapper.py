@@ -1,13 +1,14 @@
 import os
-from pathlib import Path
 import re
 import json
 import random
+import getpass
 import datetime
 import ipaddress
-# from string import ascii_letters
+from pathlib import Path
 
 # 3rd party modules
+import keyring
 import requests
 import pandas as pd
 from rich import box, print
@@ -80,9 +81,7 @@ class AbuseIPDB:
 
     @staticmethod
     def colors_legend():
-        """show colors legend used in application
-        https://newreleases.io/project/pypi/rich/release/5.0.0
-        """
+        """show colors legend used in application"""
         legend_lines = [
             "[cyan]legend:",
             "[cyan]    [*] cyan    - information",
@@ -315,6 +314,9 @@ class AbuseIPDB:
             )
             return False
 
+        if not order:
+            return False
+
         for item in order:
             if not item in self._regular_items:
                 print("[red]\[-] wrong item in columns order: {}".format(item))
@@ -336,27 +338,26 @@ class AbuseIPDB:
         """viewer help content"""
         help_lines = [
             "[green_yellow]viewer help:",
-            "[green_yellow]    cls\clear    - clear terminal",
-            "[green_yellow]    exit\quit    - exit from viewer",
-            "[green_yellow]    view         - toggle table view",
-            "[green_yellow]    live         - check IP live if not in db",
-            "[green_yellow]    all          - show all IP's from db",
-            "[green_yellow]    path         - shows path to .db file",
-            "[green_yellow]    columns \[columns list]",
-            "[green_yellow]                 - shows or apply columns order",
-            "[green_yellow]    export \[csv, html, xlsx]",
-            "[green_yellow]                 - export to file",
-            "[green_yellow]    tor          - enrich info about tor node",
+            "[green_yellow]    cls\clear                  - clear terminal",
+            "[green_yellow]    exit\quit                  - exit from viewer",
+            "[green_yellow]    view                       - toggle table view",
+            "[green_yellow]    live                       - check IP live if not in db",
+            "[green_yellow]    all                        - show all IP's from db",
+            "[green_yellow]    path                       - shows path to .db file",
+            "[green_yellow]    columns \[columns list]     - shows or apply columns order",
+            "[green_yellow]    export \[csv, html, xlsx]   - export to file",
+            "[green_yellow]    tor                        - enrich info about tor node",
+            "[green_yellow]    key                        - change API_KEY",
         ]
         lines_joined = "\n".join(help_lines)
         legend = Columns(
             [Panel(lines_joined, style="on black", border_style="royal_blue1")]
         )
         print(legend)
-        return None
 
     def viewer(self, check_live=True):
         """interactive viewer
+
         check_live - if IP is not found in local DB request is being made
         (!) Important: .viewer method resets ._ip_list attribute
         """
@@ -400,7 +401,6 @@ class AbuseIPDB:
             elif query == 'columns':
                 if rest:
                     # filter out strings which are not ascii_letters
-                    # rest = [item for item in rest if set(item).issubset(set(ascii_letters))]
                     rest = [item for item in rest if item in self._regular_items]
                     self.apply_columns_order(rest)
                 else:
@@ -426,11 +426,10 @@ class AbuseIPDB:
                         filename = directory.joinpath('abuse.xlsx')
                         self.export_xlsx_styled(filename)
                     else:
-                        print("[cyan]\[x] unrecognized; choose from: <csv>, <html>, <xlsx>")
+                        print("[yellow]\[x] unrecognized; choose from: <csv>, <html>, <xlsx>")
                         continue
-                    print("[cyan]\[*] saved to:[/cyan] {}".format(filename))
                 else:
-                    print("[cyan]\[x] no file format specfied")
+                    print("[yellow]\[x] no file format specfied")
                 continue
             elif query == 'tor':
                 enrich = False
@@ -442,6 +441,11 @@ class AbuseIPDB:
                     # enrich informations about tor exit nodes
                     self.tor_info_enrich()
                 continue
+            elif query == 'key':
+                API_KEY = store_api_key(force_new=True)
+                if API_KEY:
+                    self._API_KEY = API_KEY
+                    print("[cyan]\[*] new API_KEY assigned")
             else:
                 pass
 
@@ -655,6 +659,14 @@ class AbuseIPDB:
         if not set(self._table_columns_order).issubset(df.columns):
             print("[yellow]\[x] nothing to export")
             return False
+
+        # handle lack of abuseConfidenceScore
+        hide = []
+        ABUSE_CONFIDENCE_SCORE = 'abuseConfidenceScore'
+        if not ABUSE_CONFIDENCE_SCORE in self._table_columns_order:
+            self._table_columns_order.append(ABUSE_CONFIDENCE_SCORE)
+            hide = [ABUSE_CONFIDENCE_SCORE]
+
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
         if not xlsx and "url" in df.columns:
@@ -677,10 +689,15 @@ class AbuseIPDB:
             df.index += 1
 
         # create styled object & export it to file
-        styled = apply_style(df)
+        styled = apply_style(df, hide=hide)
+
+        # hide cleanup
+        for hidden in hide:
+            self._table_columns_order.remove(hidden)
+
         if xlsx:
             # to xlsx
-            styled.to_excel(filename)
+            styled.to_excel(filename, engine='openpyxl', columns=self._table_columns_order)
         else:
             # to html
             html = styled.to_html(render_links=True, escape=False)
@@ -707,6 +724,7 @@ class AbuseIPDB:
             return False
         df = df[self._table_columns_order]
         df.fillna("", inplace=True)
+        df.index += 1
         df.to_csv(filename, encoding="utf-8")
         print("[cyan]\[*] data saved to file:[/cyan] [green_yellow]{}".format(filename))
         return None
@@ -736,7 +754,7 @@ def style_df(x, green=None, orange=None, red=None):
         
     if red is None:
         red = '#f54c4c'
-        
+
     # add many levels
     if x["abuseConfidenceScore"] > 50:
         bg_style = ["background-color: {}".format(red)]
@@ -753,8 +771,12 @@ def style_df(x, green=None, orange=None, red=None):
     return [total_style] * len(x)
 
 
-def apply_style(df):
-    """apply style to whole dataframe"""
+def apply_style(df, hide=()):
+    """apply style to whole dataframe
+    
+    hiding columns:
+        https://stackoverflow.com/questions/49239476/hide-a-pandas-column-while-using-style-apply
+    """
     styles = [
         # table properties
         dict(
@@ -780,6 +802,7 @@ def apply_style(df):
     # styled = df.style.apply(style_df, axis=1) \
     styled = (
         Styler(df, uuid_len=0, cell_ids=False)
+        .hide(axis='columns', subset=list(hide))
         .apply(style_df, axis=1)
         .set_table_styles(styles, overwrite=True)
     )
@@ -844,22 +867,64 @@ def abuse_banner():
     print()
 
 
-def main():
-    """main entrypoint"""
-    abuse_banner()
-    abuse_directory = get_abuse_directory()
-    db_file = abuse_directory.joinpath("abuseipdb.json")
-    api_key_file = abuse_directory.joinpath('api.txt')
-    try:
-        API_KEY = api_key_file.read_text()
-        print('[cyan]\[*] using API_KEY from: {}'.format(api_key_file))
-    except FileNotFoundError:
-        API_KEY = Prompt.ask("[cyan]\[>] put your API KEY ").strip()
+def store_api_key(force_new=False):
+    """retrieve or store abuseipdb API_KEY
+
+    docs:
+        https://docs.python.org/3/library/getpass.html
+        In general, this function (getpass.getuser) should be preferred over os.getlogin()
+
+    copy & paste API_KEY:
+        https://bugs.python.org/issue37426
+        > Clicking `Edit > Paste` from the window menu
+        > Use right-click to paste
+    """
+    username = getpass.getuser()
+    if not force_new:
+        API_KEY = keyring.get_password("abuse", username)
+    else:
+        API_KEY = None
+
+    if API_KEY is not None:
+        print('[cyan]\[*] using saved API_KEY')
+    else:
+        try:
+            if os.name == 'nt':
+                os.system('color')
+            prompt_text = '\x1b[36m[>] put your API KEY: \x1b[0m'
+            API_KEY = getpass.getpass(prompt=prompt_text)
+
+        except KeyboardInterrupt:
+            print()
+            print('[yellow]\[x] broken by user')
+            return False
+
         if not API_KEY:
             print('[yellow]\[x] API_KEY not provided')
             return False
-        api_key_file.write_text(API_KEY)
-        print('[cyan]\[*] API_KEY saved to: {}'.format(api_key_file))
+
+        if API_KEY == '\x16':
+            print("[yellow]\[x] ctrl+v won't work. Type API_KEY or use right-click to paste it from clipboard")
+            return False
+
+        keyring.set_password("abuse", username, API_KEY)
+        print('[cyan]\[*] API_KEY saved')
+    return API_KEY
+
+
+def main():
+    """main entrypoint"""
+    # show banner
+    abuse_banner()
+
+    # read API_KEY
+    API_KEY = store_api_key()
+    if not API_KEY:
+        return
+
+    # run abuse viewer
+    abuse_directory = get_abuse_directory()
+    db_file = abuse_directory.joinpath("abuseipdb.json")
     abuse = AbuseIPDB(API_KEY, db_file=db_file)
     abuse.viewer()
 
