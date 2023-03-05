@@ -504,7 +504,7 @@ class AbuseIPDB:
     @staticmethod
     def _abuse_color(level):
         """set color depend on abuse level"""
-        if level > RED_LEVEL:
+        if level >= RED_LEVEL:
             color = "red"
         elif YELLOW_LEVEL <= level < RED_LEVEL:
             color = "yellow"
@@ -761,9 +761,9 @@ def style_df(x, green=None, orange=None, red=None):
         red = '#f54c4c'
 
     # add many levels
-    if x["abuseConfidenceScore"] > RED_LEVEL:
+    if x["abuseConfidenceScore"] >= RED_LEVEL:
         bg_style = ["background-color: {}".format(red)]
-    elif YELLOW_LEVEL < x["abuseConfidenceScore"] <= RED_LEVEL:
+    elif YELLOW_LEVEL <= x["abuseConfidenceScore"] < RED_LEVEL:
         bg_style = ["background-color: {}".format(orange)]
     else:
         bg_style = ["background-color: {}".format(green)]
