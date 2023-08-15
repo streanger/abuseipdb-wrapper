@@ -1,7 +1,7 @@
 import setuptools
 from pathlib import Path
 
-# requirements: pip install requests rich pandas openpyxl Jinja2 keyring
+# requirements: pip install requests rich pandas openpyxl Jinja2 keyring pwinput
 long_description = Path("README.rst").read_text()
 requirements = Path('requirements.txt').read_text().splitlines()
 version_path = Path(__file__).parent / "abuseipdb_wrapper/__version__.py"
@@ -10,7 +10,7 @@ exec(version_path.read_text(), version_info)
 
 setuptools.setup(
     name='abuseipdb-wrapper',
-    version=version_info,
+    version=version_info['__version__'],
     keywords="abuseipdb abuse ip",
     author="streanger",
     author_email="divisionexe@gmail.com",
@@ -19,7 +19,7 @@ setuptools.setup(
     long_description_content_type="text/x-rst",
     url="https://github.com/streanger/abuseipdb-wrapper",
     packages=['abuseipdb_wrapper', ],
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     license='MIT',
     install_requires=requirements,
     include_package_data=False,

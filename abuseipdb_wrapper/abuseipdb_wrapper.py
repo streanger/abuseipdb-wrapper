@@ -1,29 +1,29 @@
-import os
-import re
-import json
-import random
-import getpass
 import datetime
+import getpass
 import ipaddress
+import json
+import os
+import random
+import re
 from pathlib import Path
 
 # 3rd party modules
 import keyring
-import requests
 import pandas as pd
+import pwinput
+import requests
+from pandas.io.formats.style import Styler
 from rich import box, print
-from rich.text import Text
-from rich.table import Table
+from rich.columns import Columns
+from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
-from rich.console import Console
-from rich.columns import Columns
-from pandas.io.formats.style import Styler
+from rich.table import Table
+from rich.text import Text
 
 # my modules
-from __version__ import __version__
+from abuseipdb_wrapper.__version__ import __version__
 from abuseipdb_wrapper.tor_enrich import get_tor_exit_nodes
-
 
 # consts
 YELLOW_LEVEL = 30
@@ -32,12 +32,9 @@ RED_LEVEL = 80
 
 class AbuseIPDB:
     """abuseipdb api wrapper"""
-    def __init__(self, API_KEY, ip_list=None, db_file=None, verbose=None):
+    def __init__(self, API_KEY=None, db_file=None, verbose=None):
         self._API_KEY = API_KEY
-        if ip_list is None:
-            ip_list = []
-        valid_list = self.assert_ip_list(ip_list)
-        self._ip_list = valid_list
+        self._ip_list = []
         self._regular_items = [
             "abuseConfidenceScore",
             "countryCode",
@@ -65,10 +62,15 @@ class AbuseIPDB:
             "domain",
             "isp",
         ]
-        self._matched_only = False
-        self.table_view = True
-        self.__console = Console(color_system="truecolor")
         self.verbose = bool(verbose)
+        self.table_view = True
+        self._console = Console(color_system="truecolor")
+        self._matched_only = False
+        self._force_new = False
+        self._sumup = True
+        self._config = {
+            
+        }
 
         # ********* filename & db *********
         self._db_file = db_file
@@ -85,8 +87,7 @@ class AbuseIPDB:
                 print("[red[-] couldn't read data from file: {}".format(self._db_file))
                 raise
 
-    @staticmethod
-    def colors_legend():
+    def colors_legend(self):
         """show colors legend used in application"""
         legend_lines = [
             "[cyan]legend:",
@@ -100,8 +101,11 @@ class AbuseIPDB:
         legend = Columns(
             [Panel(lines_joined, style="on black", border_style="royal_blue1")]
         )
-        print(legend)
-        return None
+        self._console.print(legend)
+
+    def swap_api_key(API_KEY):
+        """swap API_KEY"""
+        self._API_KEY = API_KEY
 
     def get_db(self, matched_only=None):
         """return data from db - total or matching to existing ip_list"""
@@ -210,8 +214,8 @@ class AbuseIPDB:
         Eliminates any column styling
         https://github.com/Textualize/rich/discussions/1799
         """
-        with self.__console.capture() as capture:
-            self.__console.print(table)
+        with self._console.capture() as capture:
+            self._console.print(table)
         return Text.from_ansi(capture.get())
 
     def _db_str(self, matched_only=None, table_view=None):
@@ -279,8 +283,8 @@ class AbuseIPDB:
                 }
                 items_str = "\n".join(
                     [
-                        "    {}: {}".format(key.ljust(20), item)
-                        for key, item in selected_data_dict.items()
+                        f"    {key:<20}: {value}"
+                        for key, value in selected_data_dict.items()
                     ]
                 )
                 colored_items_str = "[{0}]{1}/{2})[/{0}] [[{0} reverse] {3} [/{0} reverse]]\n[{0}]{4}[/{0}]".format(
@@ -307,7 +311,11 @@ class AbuseIPDB:
 
     @staticmethod
     def _match_keys(dict_data, list_keys):
-        matched = {key: value for key, value in dict_data.items() if key in list_keys}
+        matched = {
+            key: value
+            for key, value in dict_data.items()
+            if key in list_keys
+        }
         return matched
 
     def apply_columns_order(self, order):
@@ -337,30 +345,50 @@ class AbuseIPDB:
     def toggle_view(self):
         """switch db view -> vertical/table; main purpose is .viewer method, which uses __str__"""
         self.table_view = not self.table_view
-        print("[cyan]\[*] self.table_view:[/cyan] {}".format(self.table_view))
+        print("[cyan]\[*] table-view:[/cyan] {}".format(self.table_view))
         return None
 
+    def toggle_sumup(self):
+        """toggle sumup flag"""
+        self._sumup = not self._sumup
+        print("[cyan]\[*] sumup:[/cyan] {}".format(self._sumup))
+        return None
+    
+    def toggle_force_new(self):
+        """toggle force_new flag"""
+        self._force_new = not self._force_new
+        print("[cyan]\[*] force-new:[/cyan] {}".format(self._force_new))
+        return None
+    
     def _viewer_help(self):
-        """viewer help content"""
+        """interactive viewer help content"""
         help_lines = [
-            "[green_yellow]viewer help:",
-            "[green_yellow]    cls\clear                  - clear terminal",
-            "[green_yellow]    exit\quit                  - exit from viewer",
-            "[green_yellow]    view                       - toggle table view",
-            "[green_yellow]    live                       - check IP live if not in db",
-            "[green_yellow]    all                        - show all IP's from db",
-            "[green_yellow]    path                       - shows path to .db file",
-            "[green_yellow]    columns \[columns list]     - shows or apply columns order",
-            "[green_yellow]    export \[csv, html, xlsx]   - export to file",
-            "[green_yellow]    tor                        - enrich info about tor node",
-            "[green_yellow]    key                        - change API_KEY",
-            "[green_yellow]    legend                     - colors legend",
+            ("all", "show all IP's from db"),
+            ("cls\clear", "clear terminal"),
+            ("columns <columns list>", "shows or apply columns order"),
+            ("exit\quit", "exit from viewer"),
+            ("export <csv, html, xlsx>", "export to file"),
+            ("force-new", "toggle force-new flag"),
+            ("help", "show this help"),
+            ("key", "change API_KEY"),
+            ("legend", "colors legend"),
+            ("live", "check IP live if not in db"),
+            ("path", "shows path to .db file"),
+            ("sumup", "toggle sumup flag"),
+            ("tor", "enrich info about tor node"),
+            ("view", "toggle table-view flag"),
         ]
-        lines_joined = "\n".join(help_lines)
-        legend = Columns(
-            [Panel(lines_joined, style="on black", border_style="royal_blue1")]
+        lines_joined = "\n".join(
+            [
+                "[green_yellow]    {:<30} - {}[/green_yellow]".format(key, value)
+                for key, value in help_lines
+            ]
         )
-        print(legend)
+        message = "[green_yellow]viewer help:[/green_yellow]\n{}".format(lines_joined)
+        legend = Columns(
+            [Panel(message, style="on black", border_style="royal_blue1")]
+        )
+        self._console.print(legend)
 
     def viewer(self, check_live=True):
         """interactive viewer
@@ -368,9 +396,11 @@ class AbuseIPDB:
         check_live - if IP is not found in local DB request is being made
         (!) Important: .viewer method resets ._ip_list attribute
         """
+        # prompt = "[cyan bold]⤙ abuse ⤚ "  # cmd doesn't support utf-8
+        prompt = "[cyan bold]~< abuse >~"
         while True:
             try:
-                query = Prompt.ask("[cyan bold]~< go >~# ")
+                query = Prompt.ask(prompt=prompt)
             except KeyboardInterrupt:
                 print()
                 continue
@@ -407,9 +437,16 @@ class AbuseIPDB:
                 continue
             elif query == 'columns':
                 if rest:
-                    # filter out strings which are not ascii_letters
-                    rest = [item for item in rest if item in self._regular_items]
-                    self.apply_columns_order(rest)
+                    # sanitize passed columns
+                    new_order = [item for item in rest if item in self._regular_items]
+                    new_order = remove_duplicates_keep_order(new_order)
+                    if not new_order:
+                        print("[yellow]\[x] no valid columns passed")
+                        continue
+                    self.apply_columns_order(new_order)
+                    new_order_highlight = [f"[green_yellow]{item}[/green_yellow]" for item in new_order]
+                    new_order_highlight_str = " ".join(new_order_highlight)
+                    print(f'[cyan]\[*] columns order applied:[/cyan] {new_order_highlight_str}')
                 else:
                     # show current columns order
                     regular = self._regular_items.copy()
@@ -439,14 +476,15 @@ class AbuseIPDB:
                     print("[yellow]\[x] no file format specfied")
                 continue
             elif query == 'tor':
-                enrich = False
-                for value in self._ip_database.values():
-                    if value.get('isTorNode', '') == '':
-                        enrich = True
-                        break
-                if enrich:
-                    # enrich informations about tor exit nodes
-                    self.tor_info_enrich()
+                # enrich informations about tor exit nodes
+                # no matter if already enriched
+                self.tor_info_enrich()
+                continue
+            elif query == 'sumup':
+                self.toggle_sumup()
+                continue
+            elif query == 'force-new':
+                self.toggle_force_new()
                 continue
             elif query == 'key':
                 API_KEY = store_api_key(force_new=True)
@@ -471,21 +509,32 @@ class AbuseIPDB:
                 continue
 
             if check_live:
-                no_existing = [
-                    item for item in self._ip_list if not item in self._ip_database
-                ]
-                if no_existing:
+                if self._force_new:
+                    to_check = self._ip_list
+                else:
+                    to_check = [
+                        item
+                        for item in self._ip_list
+                        if not item in self._ip_database
+                    ]
+                print(f"[cyan]\[*] {len(to_check)} IPs of {len(self._ip_list)} unique passed will be checked[/cyan]")
+                if to_check:
                     base_ip_list = self._ip_list
                     self.clear_ip_list()
-                    self.add_ip_list(no_existing)
-                    self.check()
+                    self.add_ip_list(to_check)
+                    self.check(force_new=self._force_new)
                     self._ip_list = base_ip_list
+                else:
+                    print("[cyan]\[*] force-new disabled. To enable type[/cyan] [green_yellow]force-new[/green_yellow]")
             else:
+                print("[cyan]\[*] check-live disabled. To enable type[/cyan] [green_yellow]live[/green_yellow]")
                 if not self._match_keys(self._ip_database, self._ip_list):
                     print("[yellow]\[x] no results")
                     continue
 
-            print(self._db_str(matched_only=True))
+            if self._sumup:
+                print('[cyan][*] sumup:[/cyan]')
+                print(self._db_str(matched_only=True))
         return None
 
     def tor_info_enrich(self):
@@ -499,7 +548,7 @@ class AbuseIPDB:
     def add_ip_list(self, ip_list):
         """add list of IP's to current check"""
         valid_list = self.assert_ip_list(ip_list)
-        self._ip_list = list(set(self._ip_list + valid_list))
+        self._ip_list = remove_duplicates_keep_order(self._ip_list + valid_list)
         return None
 
     @staticmethod
@@ -521,13 +570,13 @@ class AbuseIPDB:
             return None
 
         print("[cyan]\[*] iteration starts")
-        for index, ip in enumerate(self._ip_list):
+        for index, ip in enumerate(self._ip_list, start=1):
             try:
                 ip = str(ip)
                 colored_items_str = (
                     "[{0}]{1}/{2})[/{0}] [[{0} reverse] {3} [/{0} reverse]]".format(
                         "cyan",
-                        index + 1,
+                        index,
                         number_of_ip,
                         ip,
                     )
@@ -552,7 +601,7 @@ class AbuseIPDB:
                 }
                 data_str = "\n".join(
                     [
-                        "    {}: {}".format(key.ljust(20), value)
+                        f"    {key:<20}: {value}"
                         for key, value in selected_data_dict.items()
                     ]
                 )
@@ -566,7 +615,7 @@ class AbuseIPDB:
                 break
 
             except Exception as err:
-                print("[magenta]    [!] unexpected error catched: {}".format(err))
+                print("[magenta]    \[!] unexpected error catched: {}".format(err))
                 break
 
             finally:
@@ -583,9 +632,7 @@ class AbuseIPDB:
             self._write_json(self._db_file, self._ip_database)
             if self.verbose:
                 print(
-                    "[cyan]\[*] data saved to file:[/cyan] [green_yellow]{}".format(
-                        self._db_file
-                    )
+                    f"[cyan]\[*] data saved to file:[/cyan] [green_yellow]{self._db_file}"
                 )
 
     def __str__(self):
@@ -624,7 +671,6 @@ class AbuseIPDB:
         TODO: use it to set cache time and request again if elapsed
         """
         out = datetime.datetime.strptime(str_timestamp, "%Y-%m-%d %H:%M:%S.%f")
-        # ~ out = datetime.datetime.strptime(str_timestamp, '%Y-%m-%d %H:%M:%S')
         return out
 
     @staticmethod
@@ -674,7 +720,7 @@ class AbuseIPDB:
         # handle lack of abuseConfidenceScore
         hide = []
         ABUSE_CONFIDENCE_SCORE = 'abuseConfidenceScore'
-        if not ABUSE_CONFIDENCE_SCORE in self._table_columns_order:
+        if ABUSE_CONFIDENCE_SCORE not in self._table_columns_order:
             self._table_columns_order.append(ABUSE_CONFIDENCE_SCORE)
             hide = [ABUSE_CONFIDENCE_SCORE]
 
@@ -684,15 +730,7 @@ class AbuseIPDB:
             df["url"] = ["<a href={}>{}</a>".format(item, item) for item in df["url"]]
         if "ipAddress" in df.columns:
             df["ip_sorter"] = df["ipAddress"].apply(lambda x: self._ip_sorter(x))
-            df.sort_values(
-                [
-                    "ip_sorter",
-                ],
-                ascending=[
-                    True,
-                ],
-                inplace=True,
-            )
+            df.sort_values(["ip_sorter"], ascending=[True], inplace=True)
             df.drop(columns="ip_sorter", inplace=True)
             df.reset_index(drop=True, inplace=True)
             df.index += 1
@@ -740,6 +778,12 @@ class AbuseIPDB:
         print("[cyan]\[*] data saved to file:[/cyan] [green_yellow]{}".format(filename))
         return None
 
+
+def remove_duplicates_keep_order(items):
+    """remove duplicates from list and keep order
+    https://stackoverflow.com/questions/480214/how-do-i-remove-duplicates-from-a-list-while-preserving-order
+    """
+    return list(dict.fromkeys(items))
 
 def style_df(x, green=None, orange=None, red=None):
     """style dataframe series
@@ -899,7 +943,7 @@ def store_api_key(force_new=False):
             if os.name == 'nt':
                 os.system('color')
             prompt_text = '\x1b[36m[>] put your API KEY: \x1b[0m'
-            API_KEY = getpass.getpass(prompt=prompt_text)
+            API_KEY = pwinput.pwinput(prompt=prompt_text)
 
         except KeyboardInterrupt:
             print()

@@ -33,11 +33,17 @@ Command-line usage
 
     abuse
 
+or as module
+
+.. code-block:: bash
+
+    python -m abuseipdb_wrapper
+
 Python usage
 ###########################
 
 - **init `AbuseIPDB` object**
- 
+
   Init ``AbuseIPDB`` object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended becasue this project focuses on storing data for further quick access without need of another requests.
 	
   .. code-block:: python
@@ -191,6 +197,26 @@ Ideas
 
 Changelog
 ###########################
+- `v.0.1.8`:
+
+  - interactive view: enrich tor info no matter of cached value
+  - :code:`.swap_api_key:code:` method to change API_KEY
+  - pretty banner using rich Panel
+  - option for calling module from command line
+  - optional API_KEY argument in AbuseIPDB class, which allows you to interact with db
+  - using pwinput inside :code:`.store_api_key` which shows asterisks in mask and allows for ctrl+v
+  - unique IPs from list keeps order
+  - TODO: keep user config in home directory
+  - TODO: make sure rich is used for printing
+  - TODO: matched command in interactive view - operations refers to matched only:
+    - there are XX IPs matched of YY in total
+    - to disable/enable matched mode use :code:`matched` command
+    - to reset matched IPs type :code:`reset` command 
+  - TODO: show command in interactive view - show all items or matched depend on matched flag
+  - sumup flag in interactive view
+  - force-new command in interactive view
+  - info about how many IPs are to be checked in interactive view
+  - passing :code:`ip_list` to :code:`AbuseIPDB` class no longer possible
 
 - `v.0.1.7`:
 

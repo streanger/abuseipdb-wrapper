@@ -6,7 +6,7 @@ def justify(content, colors_column=None, grid=True, frame=False, enumerator=Fals
         convert text to justified
         parameters:
             content - text with newlines and delimiters, to be converted
-                      from version 0.1.2 it also can be list(tuple) of lists(tuples)
+            from version 0.1.2 it also can be list(tuple) of lists(tuples)
             grid - True/False value, grid inside; default is True
             frame - True/False value, frame around; default is False
             enumerator - True/False value, will add enumerator column on the left
