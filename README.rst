@@ -126,22 +126,22 @@ Python usage
 
 - **json columns**
 
-  - abuseConfidenceScore
-  - countryCode
-  - date  # additional
-  - domain
-  - hostnames
-  - ipAddress
-  - ipVersion
-  - isPublic
-  - isWhitelisted
-  - isp
-  - lastReportedAt
-  - numDistinctUsers
-  - totalReports
-  - url  # additional
-  - usageType
-  - isTorNode  # additional
+  - :code:`abuseConfidenceScore`
+  - :code:`countryCode`
+  - :code:`date`  # additional
+  - :code:`domain`
+  - :code:`hostnames`
+  - :code:`ipAddress`
+  - :code:`ipVersion`
+  - :code:`isPublic`
+  - :code:`isWhitelisted`
+  - :code:`isp`
+  - :code:`lastReportedAt`
+  - :code:`numDistinctUsers`
+  - :code:`totalReports`
+  - :code:`url`  # additional
+  - :code:`usageType`
+  - :code:`isTorNode`  # additional
 
 Screenshots
 ###########################
