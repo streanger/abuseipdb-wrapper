@@ -21,6 +21,7 @@ from rich.columns import Columns
 from pandas.io.formats.style import Styler
 
 # my modules
+from __version__ import __version__
 from abuseipdb_wrapper.tor_enrich import get_tor_exit_nodes
 
 
@@ -833,25 +834,29 @@ def abuse_banner():
         print(art)
         input()
     """
-    logo = """
-            _                        _             _  _
-           | |                      (_)           | || |
-      __ _ | |__   _   _  ___   ___  _  _ __    __| || |__
-     / _` || '_ \ | | | |/ __| / _ \| || '_ \  / _` || '_ \ 
-    | (_| || |_) || |_| |\__ \|  __/| || |_) || (_| || |_) |
-     \__,_||_.__/  \__,_||___/ \___||_|| .__/  \__,_||_.__/ 
-          __      __ _ __   __ _  _ __ | |___    ___  _ __
-          \ \ /\ / /| '__| / _` || '_ \|_|'_ \  / _ \| '__|
-           \ V  V / | |   | (_| || |_) || |_) ||  __/| |
-            \_/\_/  |_|    \__,_|| .__/ | .__/  \___||_|
-                                 | |    | |
-                                 |_|    |_|
-    """
-
     pypi_url = 'https://pypi.org/project/abuseipdb-wrapper/'
     github_url = 'https://github.com/streanger/abuseipdb-wrapper'
-    pip = 'pip install abuseipdb-wrapper'
-    horizontal = "================================================================"
+    pypi = 'pip install abuseipdb-wrapper'
+    logo = f"""\
+         _                        _             _  _
+        | |                      (_)           | || |
+   __ _ | |__   _   _  ___   ___  _  _ __    __| || |__
+  / _` || '_ \ | | | |/ __| / _ \| || '_ \  / _` || '_ \ 
+ | (_| || |_) || |_| |\__ \|  __/| || |_) || (_| || |_) |
+  \__,_||_.__/  \__,_||___/ \___||_|| .__/  \__,_||_.__/ 
+       __      __ _ __   __ _  _ __ | |___    ___  _ __
+       \ \ /\ / /| '__| / _` || '_ \|_|'_ \  / _ \| '__|
+        \ V  V / | |   | (_| || |_) || |_) ||  __/| |
+         \_/\_/  |_|    \__,_|| .__/ | .__/  \___||_|
+                              | |    | |
+                              |_|    |_|
+[cyan bold]\
+ v.{__version__}
+ home: [blue underline]{github_url}[/blue underline]
+ pypi: {pypi}\
+[/cyan bold]"""
+    logo = Panel(logo, style="on black", border_style="royal_blue1", width=62)
+
     styles = [
         "rgb(191,66,245)",
         "rgb(66,245,93)",
@@ -866,9 +871,6 @@ def abuse_banner():
     style = random.choice(styles)
     console = Console()
     console.print(logo, highlight=False, style=style)
-    print('home: {}'.format(github_url))
-    print(' pip: [cyan]{}[/cyan]'.format(pip))
-    print(horizontal)
     print()
 
 
@@ -924,8 +926,7 @@ def main():
 
     # read API_KEY
     API_KEY = store_api_key()
-    if not API_KEY:
-        return
+    # use no API_KEY (None) rather then exit
 
     # run abuse viewer
     abuse_directory = get_abuse_directory()
@@ -941,15 +942,15 @@ if __name__ == "__main__":
 
     # ********* local db view *********
     columns = [
-            "ipAddress",
-            "abuseConfidenceScore",
-            "totalReports",
-            "countryCode",
-            "domain",
-            "isp",
-            "date",
-            "url",
-        ]
+        "ipAddress",
+        "abuseConfidenceScore",
+        "totalReports",
+        "countryCode",
+        "domain",
+        "isp",
+        "date",
+        "url",
+    ]
     abuse.apply_columns_order(columns)
     abuse.colors_legend()
     abuse.viewer()
