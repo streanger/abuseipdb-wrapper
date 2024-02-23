@@ -7,7 +7,7 @@ requirements = Path('requirements.txt').read_text().splitlines()
 
 setuptools.setup(
     name='abuseipdb-wrapper',
-    version='0.1.7',
+    version='0.1.8',
     keywords="abuseipdb abuse ip",
     author="streanger",
     author_email="divisionexe@gmail.com",
