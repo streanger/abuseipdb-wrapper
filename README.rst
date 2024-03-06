@@ -143,23 +143,23 @@ Python usage
 Screenshots
 ###########################
 
-banner
+- banner
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/banner.png
 
-colors legend
+- colors legend
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/legend.png
 
-help
+- help
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/help.png
 
-vertical view
+- vertical view
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-vertical-view.png
 
-table view
+- table view
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-table-view.png
 
@@ -172,11 +172,11 @@ Changelog
   - passing :code:`api_key` to :code:`AbuseIPDB` is now optional
   - keep order for passing IPs
   - viewer:
-    - skip private IPs flag
-    - sumup flag
-    - force new check flag
-    - more verbose logs
-    - asterisks for api key using pwinput
+      - skip private IPs flag
+      - sumup flag
+      - force new check flag
+      - more verbose logs
+      - asterisks for api key using pwinput
   - colors support for: windows-cmd, windows-terminal, windows-powershell, vscode, linux-terminal
   - tests coverage for most features
   - export to markdown
