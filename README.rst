@@ -5,11 +5,11 @@ abuseipdb-wrapper
 Info
 ###########################
 
-- python wrapper for abuseipdb API -> https://docs.abuseipdb.com/#introduction
+- python wrapper for abuseipdb API (https://docs.abuseipdb.com/#introduction)
 
 - gives you informations about abuse level of specified IP addresses
 
-- focused on local db caching and viewing
+- focuses on caching results in local db
 
 Install
 ###########################
@@ -25,7 +25,7 @@ or newest version from github
 .. code-block:: bash
 
     pip install git+https://github.com/streanger/abuseipdb-wrapper.git
-	
+
 Command-line usage
 ###########################
 
@@ -44,38 +44,37 @@ Python usage
 
 - **init `AbuseIPDB` object**
 
-  Init ``AbuseIPDB`` object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended becasue this project focuses on storing data for further quick access without need of another requests.
-	
+  Init ``AbuseIPDB`` object using API KEY created on https://www.abuseipdb.com/. Optionally you can provide `db_file` for your local database. It is recommended because this project focuses on storing data for further quick access without need of another requests.
+
   .. code-block:: python
 
     from abuseipdb_wrapper import AbuseIPDB
     API_KEY = 'YOUR_API_KEY'
-    abuse = AbuseIPDB(API_KEY=API_KEY, db_file='abuseipdb.json')
+    abuse = AbuseIPDB(api_key=API_KEY, db_file='abuseipdb.json')
     abuse.colors_legend()
-	
-- **check list of IP's**
-    
-  Specify list of IP's to check and apply them using ``add_ip_list`` method. Next step run ``check`` method and wait.
-    
+
+- **check list of IPs**
+
+  Specify list of IPs to be checked using ``add_ip_list`` method. Then call ``check`` method and wait for results. You can enrich your results about TOR nodes info using ``tor_info_enrich`` methods.
+
   .. code-block:: python
 
     ips = ['1.2.3.4', '5.6.7.8', '9.10.11.12', '13.14.15.16']
     abuse.add_ip_list(ips)
     abuse.check()
-    abuse.tor_info_enrich()  # new feature from v.0.1.7
-                             # get info about tor exit nodes
+    abuse.tor_info_enrich()
 
 - **no db caching approach**
 
   If you are not interested in caching data in local database and only want to request for IP addresses one by one use the following code.
-  Have in mind that `.check_ip` method enriches results and removes `reports` section
+  Have in mind that `.check_ip` method enriches results and removes `reports` section.
   If using wrapper is like overkill in your project, go to: https://docs.abuseipdb.com/?python#check-endpoint
 
   .. code-block:: python
 
     from abuseipdb_wrapper import AbuseIPDB
     API_KEY = 'YOUR_API_KEY'
-    abuse = AbuseIPDB(API_KEY=API_KEY)
+    abuse = AbuseIPDB(api_key=API_KEY)
     ips = ['1.2.3.4', '2.3.4.5', '3.4.5.6']
     for IP in ips:
         result = abuse.check_ip()  # enriched with url and request time
@@ -83,52 +82,44 @@ Python usage
         print(result)
 
 - **show local db**
-    
-  To display collected information use ``show_db`` call. Data table should be displayed on terminal. Alternatively call ``print`` on your ``AbuseIPDB`` object. Before showing db you can specifiy columns to be displayed. Do it using ``apply_columns_order`` method.
-	
+
+  To display collected informations use ``show`` method. Alternatively call ``print`` on your ``AbuseIPDB`` object. You can specify columns to be displayed using ``apply_columns_order`` method. It affects both vertical and table view.
+
   .. code-block:: python
 
     columns = ['ipAddress', 'abuseConfidenceScore', 'totalReports', 'countryCode', 'domain', 'isp']
     abuse.apply_columns_order(columns)
-    # show db by print or using .show_db method
+    # show db by print or using .show method
     print(abuse)
-    abuse.show_db(matched_only=False, table_view=True)
+    abuse.show(matched_only=False, table_view=True)
 
-- **db viewer**
-    
-  For interactive IPs check and use ``.viewer`` method. It let you to provide list of IP's or single one. Use help for more information.
-  
+- **viewer**
+
+  For interactive IP check use ``.viewer`` method. It let you to provide multiple IPs at once. Use help for more information.
+
   .. code-block:: python
 
     abuse.viewer()
-    # commands inside interactive view
-    columns [columns list]  # shows or apply columns order
-    export [csv, html, xlsx]  # export to file
-    all  # show all database
+    ~< abuse >~: columns [columns list]         # shows or apply columns order
+    ~< abuse >~: export [csv, html, xlsx, md]   # export to file
+    ~< abuse >~: all                            # check/show all database
 
-- **export db to csv file**
- 
+- **exports**
+
   .. code-block:: python
-    
+
     abuse.export_csv('out.csv', matched_only=False)
-	
-- **export db to styled html file**
- 
-  .. code-block:: python
-    
     abuse.export_html_styled('out.html', matched_only=False)
- 
-- **export db to styled xlsx file**
- 
-  .. code-block:: python
-    
     abuse.export_xlsx_styled('out.xlsx', matched_only=False)
- 
+    abuse.export_md('out.md', matched_only=False)
+
 - **convert to dataframe object**
- 
+
   .. code-block:: python
-    
-    df = abuse.get_df(matched_only=False)
+
+    import pandas as pd
+    matched = abuse.get_db(matched_only=False)
+    df = pd.DataFrame(matched.values())
 
 - **json columns**
 
@@ -152,71 +143,44 @@ Python usage
 Screenshots
 ###########################
 
-cli entrypoint
+banner
 
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/entrypoint.png
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/banner.png
 
 colors legend
 
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-legend.png
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/legend.png
 
-interactive viewer help
+help
 
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-help-view.png
+.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/help.png
 
-checking IPs 
-
-.. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-live-check.png
-
-showing IPs in vertical mode
+vertical view
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-vertical-view.png
 
-showing IPs in table mode
+table view
 
 .. image:: https://raw.githubusercontent.com/streanger/abuseipdb-wrapper/main/screenshots/abuse-table-view.png
 
-Ideas
-###########################
-
-- wrap text in table columns (not only cut off with dots)
-
-- allow for justify/center table
-
-- allow for db sorting (specified by user)
-
-- IP ranges for viewer -> 1.2.3.0/24
-
-- think of more info than 'data' section in api response: reports -> comments, categories
-
-- check subnet 1.2.3.4/24 -> https://www.abuseipdb.com/check-block/1.2.3.4/24
-
-- allow passing arguments (colors) for style_df function from abuse class level
-
-- export html (from rich)
-
 Changelog
 ###########################
+
 - `v.0.1.8`:
 
-  - interactive view: enrich tor info no matter of cached value
-  - :code:`.swap_api_key:code:` method to change API_KEY
-  - pretty banner using rich Panel
-  - option for calling module from command line
-  - optional API_KEY argument in AbuseIPDB class, which allows you to interact with db
-  - using pwinput inside :code:`.store_api_key` which shows asterisks in mask and allows for ctrl+v
-  - unique IPs from list keeps order
-  - TODO: keep user config in home directory
-  - TODO: make sure rich is used for printing
-  - TODO: matched command in interactive view - operations refers to matched only:
-    - there are XX IPs matched of YY in total
-    - to disable/enable matched mode use :code:`matched` command
-    - to reset matched IPs type :code:`reset` command 
-  - TODO: show command in interactive view - show all items or matched depend on matched flag
-  - sumup flag in interactive view
-  - force-new command in interactive view
-  - info about how many IPs are to be checked in interactive view
-  - passing :code:`ip_list` to :code:`AbuseIPDB` class no longer possible
+  - more flexible exports
+  - passing :code:`api_key` to :code:`AbuseIPDB` is now optional
+  - keep order for passing IPs
+  - viewer:
+    - skip private IPs flag
+    - sumup flag
+    - force new check flag
+    - more verbose logs
+    - asterisks for api key using pwinput
+  - colors support for: windows-cmd, windows-terminal, windows-powershell, vscode, linux-terminal
+  - tests coverage for most features
+  - export to markdown
+  - and few smaller changes
 
 - `v.0.1.7`:
 
@@ -225,15 +189,13 @@ Changelog
   - `export` command in interactive view (to .csv, .html, .xlsx)
   - tor exit nodes enrichment
   - storing db file in user home directory
-  - original API request -> `.check_ip_orig`
+  - original API request using `.check_ip_orig`
   - getpass and keyring for API_KEY read & store
 
 - `v.0.1.6` and before:
 
   - black background for better view in powershell
-  - export to html (from pandas df)
-  - export to xlsx
-  - export to csv
+  - export to csv, html, xlsx (from pandas df)
   - wrap text in table cells - made using rich table
   - return dataframe object
-  - date of last check
+  - enrich results with date of last check

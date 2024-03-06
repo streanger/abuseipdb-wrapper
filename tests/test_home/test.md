@@ -1,0 +1,10 @@
+|    | ipAddress   |   abuseConfidenceScore |   totalReports | countryCode   | hostnames                                          | domain         | isp                                       |
+|---:|:------------|-----------------------:|---------------:|:--------------|:---------------------------------------------------|:---------------|:------------------------------------------|
+|  1 | 1.1.1.1     |                      0 |             42 | US            | ['one.one.one.one']                                | cloudflare.com | APNIC and CloudFlare DNS Resolver Project |
+|  2 | 2.2.2.2     |                      0 |              3 | FR            | []                                                 | orange.com     | Orange S.A.                               |
+|  3 | 3.3.3.3     |                     22 |              5 | US            | []                                                 | amazon.com     | Amazon Technologies Inc.                  |
+|  4 | 4.4.4.4     |                      0 |              0 | US            | []                                                 | level3.com     | Level 3 Communications Inc.               |
+|  5 | 5.5.5.5     |                      0 |              1 | DE            | ['dynamic-005-005-005-005.5.5.pool.telefonica.de'] | telefonica.de  | Telefonica Germany GmbH & Co. OHG         |
+|  6 | 6.6.6.6     |                      0 |              1 | US            | []                                                 | army.mil       | Headquarters USAISC                       |
+|  7 | 7.7.7.7     |                      0 |              0 | US            | []                                                 | nic.mil        | DoD Network Information Center            |
+|  8 | 8.8.8.8     |                      0 |             53 | US            | ['dns.google']                                     | google.com     | Google LLC                                |

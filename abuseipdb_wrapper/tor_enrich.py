@@ -1,6 +1,27 @@
 """collect informations about tor exit nodes"""
 import ipaddress
+import sys
 import requests
+
+
+try:
+    # TODO: windows-cmd and windows-powershell fails to utf-8
+    # TODO: windows-terminal, linux-terminal and vscode works with utf-8
+    # TODO: we need other method to detect it
+    '🧅'.encode(sys.stdout.encoding)
+    is_tor = '🧅'
+    is_not_tor = False
+except UnicodeEncodeError:
+    is_tor = True
+    is_not_tor = False
+
+
+def tor_value(status):
+    """return proper tor character/status"""
+    if status:
+        return is_tor
+    else:
+        return is_not_tor
 
 
 def get_tor_exit_nodes():

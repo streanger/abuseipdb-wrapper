@@ -30,3 +30,10 @@ ENV/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+
+# test environment
+testvenv/
+tests/test_home/out.csv
+tests/test_home/out.html
+tests/test_home/out.md
+tests/test_home/out.xlsx

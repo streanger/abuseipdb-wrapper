@@ -1,0 +1,17 @@
+{
+    "columns": [
+        "ipAddress",
+        "abuseConfidenceScore",
+        "totalReports",
+        "countryCode",
+        "hostnames",
+        "domain",
+        "isp"
+    ],
+    "force": false,
+    "live": true,
+    "skip": true,
+    "sumup": true,
+    "verbose": true,
+    "view": true
+}

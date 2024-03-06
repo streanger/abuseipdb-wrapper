@@ -1,0 +1,12 @@
+Jinja2
+openpyxl
+pandas
+pwinput
+keyring
+requests
+tabulate
+rich
+pytest
+mypy
+pylint
+pytest_httpserver
