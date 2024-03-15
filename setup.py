@@ -37,7 +37,7 @@ setuptools.setup(
     long_description_content_type="text/x-rst",
     url="https://github.com/streanger/abuseipdb-wrapper",
     packages=["abuseipdb_wrapper",],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     license="MIT",
     install_requires=requirements,
     include_package_data=False,
