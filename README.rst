@@ -55,14 +55,13 @@ Python usage
 
 - **check list of IPs**
 
-  Specify list of IPs to be checked using ``add_ip_list`` method. Then call ``check`` method and wait for results. You can enrich your results about TOR nodes info using ``tor_info_enrich`` methods.
+  Specify list of IPs to be checked using ``add_ip_list`` method. Then call ``check`` method and wait for results.
 
   .. code-block:: python
 
     ips = ['1.2.3.4', '5.6.7.8', '9.10.11.12', '13.14.15.16']
     abuse.add_ip_list(ips)
     abuse.check()
-    abuse.tor_info_enrich()
 
 - **no db caching approach**
 
@@ -138,7 +137,7 @@ Python usage
   - :code:`totalReports`
   - :code:`url`  # additional
   - :code:`usageType`
-  - :code:`isTorNode`  # additional
+  - :code:`isTor`
 
 Screenshots
 ###########################
@@ -165,6 +164,9 @@ Screenshots
 
 Changelog
 ###########################
+- `v.0.1.9`:
+
+  - additional `isTorNode` field replaced with `isTor` supported by api
 
 - `v.0.1.8`:
 
