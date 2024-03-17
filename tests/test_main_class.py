@@ -81,7 +81,6 @@ def test_check_ip(httpserver: HTTPServer):
         # **** check_ip ****
         result = abuse.check_ip(IP_TO_CHECK)
         del result['date']
-        del result['isTorNode']
         del result['url']
         assert result == json.loads(raw_responses[IP_TO_CHECK])['data']
 
@@ -157,10 +156,10 @@ def test_db_interaction():
         "lastReportedAt",
         "numDistinctUsers",
         "totalReports",
-        "url",  # additional (abuseipdb related url)
         "usageType",
+        "url",  # additional (abuseipdb related url)
         "date",  # additional (date of request)
-        "isTorNode",  # additional; requires tor enrich
+        "isTor",
     ]
     abuse.set_columns(new_columns)
     assert abuse.config['columns'] == new_columns

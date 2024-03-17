@@ -20,7 +20,6 @@ from abuseipdb_wrapper.__version__ import __version__
 from abuseipdb_wrapper.logger import (CYAN, GREEN, HIGH, INFO_COLOR, IP_COLOR,
                                       RED, RED_LEVEL, YELLOW, YELLOW_LEVEL,
                                       console, log, print)
-from abuseipdb_wrapper.tor_enrich import get_tor_exit_nodes
 from abuseipdb_wrapper.utils import (get_abuse_directory, read_json,
                                      remove_duplicates_keep_order,
                                      store_api_key, write_file, write_json)
@@ -41,10 +40,10 @@ class Config():
             "lastReportedAt",
             "numDistinctUsers",
             "totalReports",
-            "url",  # additional (abuseipdb related url)
             "usageType",
+            "url",  # additional (abuseipdb related url)
             "date",  # additional (date of request)
-            "isTorNode",  # additional (requires tor enrich)
+            "isTor",
         ]
         self._init_columns = [
             "ipAddress",
@@ -144,7 +143,6 @@ class AbuseIPDB(Config):
             self.add_ip_list(ip_list=ip_list)
         self._abuse_domain = 'https://api.abuseipdb.com'
         self._matched_only = False
-        self.tor_exit_nodes = set()
 
         # ***** filename & db *****
         self._db_file = db_file
@@ -273,7 +271,6 @@ class AbuseIPDB(Config):
         data = decoded["data"]
         data["url"] = f"https://www.abuseipdb.com/check/{ip}"
         data["date"] = self._timestamp()
-        data["isTorNode"] = data["ipAddress"] in self.tor_exit_nodes
         return data
 
     def _log_table(self, table):
@@ -384,7 +381,6 @@ class AbuseIPDB(Config):
             ("path", "shows path to db file", None),
             ("skip", "skip private IPs from check", 'flag'),
             ("sumup", "show sumup after check", 'flag'),
-            ("tor", "enrich info about tor nodes", None),
             ("view", "switch between table and vertical view", 'flag'),
             ("verbose", "show verbose informations", 'flag'),
         ]
@@ -546,11 +542,6 @@ class AbuseIPDB(Config):
                 elif path.suffix == ".md":
                     self.export_md(path, matched_only=matched_only)
                 continue
-            elif query == "tor":
-                # enrich informations about tor exit nodes
-                # no matter if already enriched
-                self.tor_info_enrich()
-                continue
             elif query == "key":
                 API_KEY = store_api_key(force_new=True)
                 if API_KEY:
@@ -599,23 +590,6 @@ class AbuseIPDB(Config):
             else:
                 log(f"[{CYAN}]\[*] sumup disabled. To enable type[/{CYAN}] [{HIGH}]sumup[/{HIGH}]")
         return None
-
-    def tor_info_enrich(self):
-        """get info about tor exit nodes"""
-        try:
-            self.tor_exit_nodes = get_tor_exit_nodes()
-        except requests.exceptions.ConnectionError as err:
-            print(f"[{RED}]\[-] failed to enrich tor info: {err}[/{RED}]")
-            return False
-        counter = 0
-        for key in self._ip_database.keys():
-            is_tor_node = key in self.tor_exit_nodes
-            if is_tor_node:
-                counter += 1
-            self._ip_database[key]["isTorNode"] = is_tor_node
-        print(f"[{CYAN}]\[*] tor-exit-nodes info enriched[/{CYAN}]")
-        print(f"[{CYAN}]\[*] found {counter} tor nodes of {len(self._ip_database)} total IPs[/{CYAN}]")
-        self.update_local_db()
 
     @staticmethod
     def _abuse_color(level):
