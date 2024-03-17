@@ -166,7 +166,7 @@ Changelog
 ###########################
 - `v.0.1.9`:
 
-  - additional `isTorNode` field replaced with `isTor` supported by api
+  - additional :code:`isTorNode` field replaced with :code:`isTor` supported by api
 
 - `v.0.1.8`:
 
