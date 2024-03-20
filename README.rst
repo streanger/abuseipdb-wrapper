@@ -164,6 +164,12 @@ Screenshots
 
 Changelog
 ###########################
+- `v.0.2.0`:
+
+  - removed pandas dependency
+  - custom export functions
+  - :code:`date` as isoformat with timezone
+
 - `v.0.1.9`:
 
   - additional :code:`isTorNode` field replaced with :code:`isTor` supported by api

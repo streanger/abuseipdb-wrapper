@@ -1,22 +1,23 @@
-import datetime
+import csv
 import ipaddress
 import os
 import random
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 # 3rd party modules
-import pandas as pd
 import requests
-from pandas.io.formats.style import Styler
 from rich.columns import Columns
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
+from tabulate import tabulate
 
 # my modules
 from abuseipdb_wrapper.__version__ import __version__
+from abuseipdb_wrapper.exports import to_html, to_xlsx
 from abuseipdb_wrapper.logger import (CYAN, GREEN, HIGH, INFO_COLOR, IP_COLOR,
                                       RED, RED_LEVEL, YELLOW, YELLOW_LEVEL,
                                       console, log, print)
@@ -675,19 +676,19 @@ class AbuseIPDB(Config):
     @staticmethod
     def _timestamp():
         """generate timestamp in string format"""
-        out = str(datetime.datetime.now())
+        out = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         return out
 
     @staticmethod
     def _timestamp_to_datetime(str_timestamp):
         """convert string timestamp to datetime type"""
-        out = datetime.datetime.strptime(str_timestamp, "%Y-%m-%d %H:%M:%S.%f")
+        out = datetime.strptime(str_timestamp, "%Y-%m-%d %H:%M:%S.%f")
         return out
 
     @staticmethod
     def _unix_to_datetime(unix_time):
         """convert unix to datetime"""
-        out = datetime.datetime.fromtimestamp(unix_time)
+        out = datetime.fromtimestamp(unix_time)
         return out
 
     @staticmethod
@@ -709,12 +710,39 @@ class AbuseIPDB(Config):
             self = args[0]
             matched_only = kwargs.get('matched_only')
             if matched_only:
-                matched = self._match_keys(self._ip_database, self._ip_list).values()
+                matched = list(self._match_keys(self._ip_database, self._ip_list).values())
             else:
-                matched = self._ip_database.values()
+                matched = list(self._ip_database.values())
 
-            # log how many data will be exported
+            # check if any columns exists
+            temporary_columns = self.config["columns"].copy()
+            if (not matched) or (not set(temporary_columns).issubset(matched[0].keys())):
+                log(f"[{YELLOW}]\[x] nothing to export[/{YELLOW}]")
+                return False
+
+            # handle lack of abuseConfidenceScore
+            if 'hide' in func.__code__.co_varnames:
+                ABUSE_CONFIDENCE_SCORE = "abuseConfidenceScore"
+                if ABUSE_CONFIDENCE_SCORE not in temporary_columns:
+                    temporary_columns.append(ABUSE_CONFIDENCE_SCORE)
+                    kwargs['hide'] = [ABUSE_CONFIDENCE_SCORE]
+
+            # cut data to given columns
+            matched = [[row[column] for column in temporary_columns] for row in matched]
+
+            # sort data by ipAddress or by first column
+            IP_ADDRESS_COLUMN = "ipAddress"
+            if IP_ADDRESS_COLUMN in temporary_columns:
+                index_of_sort_by = temporary_columns.index(IP_ADDRESS_COLUMN)
+            else:
+                index_of_sort_by = 0
+            matched = sorted(matched, key=lambda x: self._ip_sorter(x[index_of_sort_by]))
+
+            # matched is: [header, row1, row2, ...]
             log(f"[{CYAN}]\[*] exporting [{HIGH}]{len(matched)}[/{HIGH}] of [{HIGH}]{len(self._ip_database)}[/{HIGH}] items from db[/{CYAN}]")
+            matched.insert(0, temporary_columns)
+
+            # apply data to function
             kwargs['matched'] = matched
             result = func(*args, **kwargs)
 
@@ -726,154 +754,35 @@ class AbuseIPDB(Config):
         return wrapper
 
     @export_wrapper
-    def export_html_styled(self, path, matched_only=None, matched=None, xlsx=False):
-        """export database to styled html file under specified path using pandas"""
-        # create dataframe; filter columns, clickable url & sorting
-        df = pd.DataFrame(matched)
-        if not set(self.config["columns"]).issubset(df.columns):
-            print(f"[{YELLOW}]\[x] nothing to export[/{YELLOW}]")
-            return False
-
-        # handle lack of abuseConfidenceScore
-        hide = []
-        ABUSE_CONFIDENCE_SCORE = "abuseConfidenceScore"
-        if ABUSE_CONFIDENCE_SCORE not in self.config["columns"]:
-            self.config["columns"].append(ABUSE_CONFIDENCE_SCORE)
-            hide = [ABUSE_CONFIDENCE_SCORE]
-
-        df = df[self.config["columns"]]
-        df.fillna("", inplace=True)
-        if not xlsx and "url" in df.columns:
-            df["url"] = [f"<a href={item}>{item}</a>" for item in df["url"]]
-        if "ipAddress" in df.columns:
-            df["ip_sorter"] = df["ipAddress"].apply(lambda x: self._ip_sorter(x))
-            df.sort_values(["ip_sorter"], ascending=[True], inplace=True)
-            df.drop(columns="ip_sorter", inplace=True)
-            df.reset_index(drop=True, inplace=True)
-            df.index += 1
-        else:
-            df.index += 1
-
-        # create styled object & export it to file
-        styled = apply_style(df, hide=hide)
-
-        # hide cleanup
-        for hidden in hide:
-            self.config["columns"].remove(hidden)
-
-        if xlsx:
-            # to xlsx
-            styled.to_excel(path, engine="openpyxl", columns=self.config["columns"])
-        else:
-            # to html
-            html = styled.to_html(render_links=True, escape=False)
-            write_file(path, html)
+    def export_html_styled(self, path, matched_only=None, matched=None, hide=None):
+        """thin wrapper for to_html function"""
+        html = to_html(matched, hide=hide)
+        write_file(path, html)
         return True
 
-    def export_xlsx_styled(self, path, matched_only=None):
-        """export database to styled xlsx file under specified path using pandas"""
-        self.export_html_styled(path, matched_only=matched_only, xlsx=True)
+    @export_wrapper
+    def export_xlsx_styled(self, path, matched_only=None, matched=None, hide=None):
+        wb = to_xlsx(data=matched, hide=hide)
+        wb.save(path)
+        return True
 
     @export_wrapper
     def export_md(self, path, matched_only=None, matched=None):
-        """export databse to markdown file under specified path"""
-        # create dataframe; filter columns
-        df = pd.DataFrame(matched)
-        if not set(self.config["columns"]).issubset(df.columns):
-            print(f"[{YELLOW}]\[x] nothing to export[/{YELLOW}]")
-            return False
-        df = df[self.config["columns"]]
-        df.fillna("", inplace=True)
-        df.index += 1
-        md = df.to_markdown()
-        Path(path).write_text(md, encoding='utf-8')
+        header, *rows = matched
+        rowIDs = [index for index, _ in enumerate(rows, start=1)]
+        md = tabulate(rows, headers=header, tablefmt="pipe", showindex=rowIDs)
+        write_file(path, md)
         return True
 
     @export_wrapper
     def export_csv(self, path, matched_only=None, matched=None):
-        """export databse to csv file under specified path"""
-        # create dataframe; filter columns
-        df = pd.DataFrame(matched)
-        if not set(self.config["columns"]).issubset(df.columns):
-            print(f"[{YELLOW}]\[x] nothing to export[/{YELLOW}]")
-            return False
-        df = df[self.config["columns"]]
-        df.fillna("", inplace=True)
-        df.index += 1
-        df.to_csv(path, encoding="utf-8")
+        """we dont use indexing in output csv"""
+        header, *rows = matched
+        with open(path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(rows)
         return True
-
-
-def style_df(x, green=None, orange=None, red=None):
-    """style dataframe series
-
-    colors default value:
-        green   - #4cf58c
-        orange  - #f5cd4c
-        red     - #f54c4c
-    """
-    # ***** color style *****
-    if green is None:
-        green = "#4cf58c"
-
-    if orange is None:
-        orange = "#f5cd4c"
-
-    if red is None:
-        red = "#f54c4c"
-
-    # add many levels
-    if x["abuseConfidenceScore"] >= RED_LEVEL:
-        bg_style = [f"background-color: {red}"]
-    elif YELLOW_LEVEL <= x["abuseConfidenceScore"] < RED_LEVEL:
-        bg_style = [f"background-color: {orange}"]
-    else:
-        bg_style = [f"background-color: {green}"]
-
-    # ***** other styles *****
-    other_styles = ["text-align:right"]
-
-    # ***** total style *****
-    total_style = ";".join(bg_style + other_styles)
-    return [total_style] * len(x)
-
-
-def apply_style(df, hide=()):
-    """apply style to whole dataframe
-
-    hiding columns:
-        https://stackoverflow.com/questions/49239476/hide-a-pandas-column-while-using-style-apply
-    """
-    styles = [
-        # table properties
-        dict(
-            selector="",
-            props=[
-                ("margin-left", "auto"),
-                ("margin-right", "auto"),
-                ("width", "80%"),
-            ],
-        ),
-        dict(
-            selector="td",
-            props=[
-                ("border", "1px solid #777"),
-                ("border-spacing", "10px"),
-                ("padding", "5px"),
-            ],
-        ),
-    ]
-
-    # large tables styling limitations
-    # https://github.com/pandas-dev/pandas/issues/39400
-    # styled = df.style.apply(style_df, axis=1) \
-    styled = (
-        Styler(df, uuid_len=0, cell_ids=False)
-        .hide(axis="columns", subset=list(hide))
-        .apply(style_df, axis=1)
-        .set_table_styles(styles, overwrite=True)
-    )
-    return styled
 
 
 def abuse_banner():
