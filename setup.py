@@ -16,10 +16,8 @@ exec(version_path.read_text(), version_info)
 # pprint.pprint(requirements)
 
 requirements = [
-    'jinja2>=3.1.3',
     'keyring>=24.3.1',
     'openpyxl>=3.1.2',
-    'pandas>=2.2.1',
     'pwinput>=1.0.3',
     'requests>=2.31.0',
     'rich>=13.7.1',
