@@ -755,19 +755,21 @@ class AbuseIPDB(Config):
 
     @export_wrapper
     def export_html_styled(self, path, matched_only=None, matched=None, hide=None):
-        """thin wrapper for to_html function"""
+        """export db to html"""
         html = to_html(matched, hide=hide)
         write_file(path, html)
         return True
 
     @export_wrapper
     def export_xlsx_styled(self, path, matched_only=None, matched=None, hide=None):
+        """export db to xlsx"""
         wb = to_xlsx(data=matched, hide=hide)
         wb.save(path)
         return True
 
     @export_wrapper
     def export_md(self, path, matched_only=None, matched=None):
+        """export db to md"""
         header, *rows = matched
         rowIDs = [index for index, _ in enumerate(rows, start=1)]
         md = tabulate(rows, headers=header, tablefmt="pipe", showindex=rowIDs)
@@ -776,7 +778,7 @@ class AbuseIPDB(Config):
 
     @export_wrapper
     def export_csv(self, path, matched_only=None, matched=None):
-        """we dont use indexing in output csv"""
+        """export db to csv"""
         header, *rows = matched
         with open(path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
