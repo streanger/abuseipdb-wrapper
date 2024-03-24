@@ -1,6 +1,4 @@
-Jinja2
 openpyxl
-pandas
 pwinput
 keyring
 requests

@@ -104,19 +104,15 @@ def to_xlsx(data, hide=None):
     return wb
 
 
-def to_html(data, hide=None, title=None):
+def to_html(data, hide=None):
     """convert table with list of lists to html table
 
     data - data to show as html table
     hide - list of columns to hide
-    title - html title
     code is modfied version of func from sets_matcher.py
     """
     if hide is None:
         hide = []
-
-    if title is None:
-        title = f'abuse-{time.strftime("%Y-%m-%d")}'
 
     # **** create body ****
     header, *table = data
@@ -306,7 +302,7 @@ function table_sorter(column) {
     template = f"""\
 <html>
 <head>
-    <title>{title}</title>
+    <title>abuse</title>
     <meta charset="utf-8">
     <style>
 {style}
