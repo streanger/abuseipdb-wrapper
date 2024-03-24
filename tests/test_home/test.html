@@ -1,112 +1,232 @@
-<style type="text/css">
-#T_  {
-  margin-left: auto;
-  margin-right: auto;
-  width: 80%;
+<html>
+<head>
+    <title>abuse-2024-03-24</title>
+    <meta charset="utf-8">
+    <style>
+    .styled-table {
+        border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 0.8em;
+        font-family: cambria;
+        min-width: 400px;
+    }
+    .styled-table thead tr {
+        background-color: #0099d9;
+        color: #ffffff;
+    }
+    .styled-table td {
+        padding: 6px 9px;
+        text-align: center;
+    }
+    .styled-table td:first-child {
+        padding: 6px 9px;
+        text-align: right;
+    }
+    .styled-table tbody tr {
+        border-bottom: 1px solid #0099d9;
+    }
+    .styled-table th {
+        padding: 0;
+        text-align: center;
+    }
+    .styled-table th button {
+        background-color: transparent;
+        border: none;
+        font: inherit;
+        color: inherit;
+        height: 100%;
+        width: 100%;
+        padding: 6px 9px;
+        display: inline-block;
+    }
+    .styled-table th button::after {
+        content: "\00a0\00a0";
+        font-family: 'Courier New', Courier, monospace
+    }
+    .styled-table th button[direction="ascending"]::after {
+        content: "\00a0▲";
+    }
+    .styled-table th button[direction="descending"]::after {
+        content: "\00a0▼";
+    }
+    .red {background-color: #f54c4c;}
+    .yellow {background-color: #f5cd4c;}
+    .green {background-color: #4cf58c;}
+    .marker {
+        background-color: #ffffff99;
+        border-radius: 30px;
+    }
+    </style>
+    <script>
+function main() {
+    var table = document.getElementsByTagName("table")[0];
+    var header = table.getElementsByTagName("tr")[0];
+    var headers = header.getElementsByTagName("th");
+    for (var i = 0; i < headers.length; i++) {
+        var btn = headers[i].getElementsByTagName("button")[0];
+        btn.setAttribute("onclick", `table_sorter(${i})`);
+    }
 }
-#T_ td {
-  border: 1px solid #777;
-  border-spacing: 10px;
-  padding: 5px;
+
+function compareIPs(a, b) {
+    const aParts = a.split('.').map(part => +part);
+    const bParts = b.split('.').map(part => +part);
+    for (let i = 0; i < aParts.length; i++) {
+        if (aParts[i] > bParts[i]) return 1;
+        if (aParts[i] < bParts[i]) return -1;
+    }
+    return 0;
 }
-#T__row0_col0, #T__row0_col1, #T__row0_col2, #T__row0_col3, #T__row0_col4, #T__row0_col5, #T__row0_col6, #T__row1_col0, #T__row1_col1, #T__row1_col2, #T__row1_col3, #T__row1_col4, #T__row1_col5, #T__row1_col6, #T__row2_col0, #T__row2_col1, #T__row2_col2, #T__row2_col3, #T__row2_col4, #T__row2_col5, #T__row2_col6, #T__row3_col0, #T__row3_col1, #T__row3_col2, #T__row3_col3, #T__row3_col4, #T__row3_col5, #T__row3_col6, #T__row4_col0, #T__row4_col1, #T__row4_col2, #T__row4_col3, #T__row4_col4, #T__row4_col5, #T__row4_col6, #T__row5_col0, #T__row5_col1, #T__row5_col2, #T__row5_col3, #T__row5_col4, #T__row5_col5, #T__row5_col6, #T__row6_col0, #T__row6_col1, #T__row6_col2, #T__row6_col3, #T__row6_col4, #T__row6_col5, #T__row6_col6, #T__row7_col0, #T__row7_col1, #T__row7_col2, #T__row7_col3, #T__row7_col4, #T__row7_col5, #T__row7_col6 {
-  background-color: #4cf58c;
-  text-align: right;
+
+function table_sorter(column) {
+    var table = document.getElementsByTagName("table")[0];
+    var tableBody = table.getElementsByTagName("tbody")[0];
+    var columnButton = table.getElementsByTagName("tr")[0].getElementsByTagName("th")[column].getElementsByTagName("button")[0];
+    var columnName = columnButton.textContent;
+    var direction = columnButton.getAttribute("direction");
+    if (direction == "ascending") {
+        direction = "descending";
+    } else {
+        direction = "ascending";
+    }
+    var rows = Array.from(table.getElementsByTagName("tr")).slice(1);
+    if (columnName == "ipAddress") {
+        rows.sort(function(a, b) {
+            var x = a.getElementsByTagName("td")[column].textContent.toLowerCase();
+            var y = b.getElementsByTagName("td")[column].textContent.toLowerCase();
+            if (direction === "ascending") {
+                return compareIPs(x, y) || x.localeCompare(y);
+            } else {
+                return compareIPs(y, x) || y.localeCompare(x);
+            }
+        });
+    }
+    else {
+        rows.sort(function(a, b) {
+            var x = a.getElementsByTagName("td")[column].textContent.toLowerCase();
+            var y = b.getElementsByTagName("td")[column].textContent.toLowerCase();
+            if (direction === "ascending") {
+                return x - y || x.localeCompare(y);
+            } else {
+                return y - x || y.localeCompare(x);
+            }
+        });
+    }
+    rows.forEach(function(row) {
+        tableBody.appendChild(row);
+    });
+
+    // show direction using arrow icon
+    var header = table.getElementsByTagName("tr")[0];
+    var headers = header.getElementsByTagName("th");
+    for (var i = 0; i < headers.length; i++) {
+        var btn = headers[i].getElementsByTagName("button")[0];
+        if (i == column) {
+            btn.setAttribute("direction", direction);
+        } else {
+            btn.setAttribute("direction", "");
+        }
+    }
 }
-</style>
-<table id="T_">
-  <thead>
-    <tr>
-      <th class="blank level0" >&nbsp;</th>
-      <th class="col_heading level0 col0" >ipAddress</th>
-      <th class="col_heading level0 col1" >abuseConfidenceScore</th>
-      <th class="col_heading level0 col2" >totalReports</th>
-      <th class="col_heading level0 col3" >countryCode</th>
-      <th class="col_heading level0 col4" >hostnames</th>
-      <th class="col_heading level0 col5" >domain</th>
-      <th class="col_heading level0 col6" >isp</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th class="row_heading level0 row0" >1</th>
-      <td id="T__row0_col0" class="data row0 col0" >1.1.1.1</td>
-      <td id="T__row0_col1" class="data row0 col1" >0</td>
-      <td id="T__row0_col2" class="data row0 col2" >42</td>
-      <td id="T__row0_col3" class="data row0 col3" >US</td>
-      <td id="T__row0_col4" class="data row0 col4" >['one.one.one.one']</td>
-      <td id="T__row0_col5" class="data row0 col5" >cloudflare.com</td>
-      <td id="T__row0_col6" class="data row0 col6" >APNIC and CloudFlare DNS Resolver Project</td>
-    </tr>
-    <tr>
-      <th class="row_heading level0 row1" >2</th>
-      <td id="T__row1_col0" class="data row1 col0" >2.2.2.2</td>
-      <td id="T__row1_col1" class="data row1 col1" >0</td>
-      <td id="T__row1_col2" class="data row1 col2" >3</td>
-      <td id="T__row1_col3" class="data row1 col3" >FR</td>
-      <td id="T__row1_col4" class="data row1 col4" >[]</td>
-      <td id="T__row1_col5" class="data row1 col5" >orange.com</td>
-      <td id="T__row1_col6" class="data row1 col6" >Orange S.A.</td>
-    </tr>
-    <tr>
-      <th class="row_heading level0 row2" >3</th>
-      <td id="T__row2_col0" class="data row2 col0" >3.3.3.3</td>
-      <td id="T__row2_col1" class="data row2 col1" >22</td>
-      <td id="T__row2_col2" class="data row2 col2" >5</td>
-      <td id="T__row2_col3" class="data row2 col3" >US</td>
-      <td id="T__row2_col4" class="data row2 col4" >[]</td>
-      <td id="T__row2_col5" class="data row2 col5" >amazon.com</td>
-      <td id="T__row2_col6" class="data row2 col6" >Amazon Technologies Inc.</td>
-    </tr>
-    <tr>
-      <th class="row_heading level0 row3" >4</th>
-      <td id="T__row3_col0" class="data row3 col0" >4.4.4.4</td>
-      <td id="T__row3_col1" class="data row3 col1" >0</td>
-      <td id="T__row3_col2" class="data row3 col2" >0</td>
-      <td id="T__row3_col3" class="data row3 col3" >US</td>
-      <td id="T__row3_col4" class="data row3 col4" >[]</td>
-      <td id="T__row3_col5" class="data row3 col5" >level3.com</td>
-      <td id="T__row3_col6" class="data row3 col6" >Level 3 Communications Inc.</td>
-    </tr>
-    <tr>
-      <th class="row_heading level0 row4" >5</th>
-      <td id="T__row4_col0" class="data row4 col0" >5.5.5.5</td>
-      <td id="T__row4_col1" class="data row4 col1" >0</td>
-      <td id="T__row4_col2" class="data row4 col2" >1</td>
-      <td id="T__row4_col3" class="data row4 col3" >DE</td>
-      <td id="T__row4_col4" class="data row4 col4" >['dynamic-005-005-005-005.5.5.pool.telefonica.de']</td>
-      <td id="T__row4_col5" class="data row4 col5" >telefonica.de</td>
-      <td id="T__row4_col6" class="data row4 col6" >Telefonica Germany GmbH & Co. OHG</td>
-    </tr>
-    <tr>
-      <th class="row_heading level0 row5" >6</th>
-      <td id="T__row5_col0" class="data row5 col0" >6.6.6.6</td>
-      <td id="T__row5_col1" class="data row5 col1" >0</td>
-      <td id="T__row5_col2" class="data row5 col2" >1</td>
-      <td id="T__row5_col3" class="data row5 col3" >US</td>
-      <td id="T__row5_col4" class="data row5 col4" >[]</td>
-      <td id="T__row5_col5" class="data row5 col5" >army.mil</td>
-      <td id="T__row5_col6" class="data row5 col6" >Headquarters USAISC</td>
-    </tr>
-    <tr>
-      <th class="row_heading level0 row6" >7</th>
-      <td id="T__row6_col0" class="data row6 col0" >7.7.7.7</td>
-      <td id="T__row6_col1" class="data row6 col1" >0</td>
-      <td id="T__row6_col2" class="data row6 col2" >0</td>
-      <td id="T__row6_col3" class="data row6 col3" >US</td>
-      <td id="T__row6_col4" class="data row6 col4" >[]</td>
-      <td id="T__row6_col5" class="data row6 col5" >nic.mil</td>
-      <td id="T__row6_col6" class="data row6 col6" >DoD Network Information Center</td>
-    </tr>
-    <tr>
-      <th class="row_heading level0 row7" >8</th>
-      <td id="T__row7_col0" class="data row7 col0" >8.8.8.8</td>
-      <td id="T__row7_col1" class="data row7 col1" >0</td>
-      <td id="T__row7_col2" class="data row7 col2" >53</td>
-      <td id="T__row7_col3" class="data row7 col3" >US</td>
-      <td id="T__row7_col4" class="data row7 col4" >['dns.google']</td>
-      <td id="T__row7_col5" class="data row7 col5" >google.com</td>
-      <td id="T__row7_col6" class="data row7 col6" >Google LLC</td>
-    </tr>
-  </tbody>
-</table>
+    </script>
+</head>
+<body onload=main()>
+    <table class="styled-table">
+        <thead>
+            <tr>
+            <th><button>Index</button></th>
+            <th><button>ipAddress</button></th>
+            <th><button>abuseConfidenceScore</button></th>
+            <th><button>totalReports</button></th>
+            <th><button>countryCode</button></th>
+            <th><button>hostnames</button></th>
+            <th><button>domain</button></th>
+            <th><button>isp</button></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="green">
+                <td>1</td>
+                <td>1.1.1.1</td>
+                <td>0</td>
+                <td>42</td>
+                <td>US</td>
+                <td>['one.one.one.one']</td>
+                <td>cloudflare.com</td>
+                <td>APNIC and CloudFlare DNS Resolver Project</td>
+            </tr>
+            <tr class="green">
+                <td>2</td>
+                <td>2.2.2.2</td>
+                <td>0</td>
+                <td>3</td>
+                <td>FR</td>
+                <td>[]</td>
+                <td>orange.com</td>
+                <td>Orange S.A.</td>
+            </tr>
+            <tr class="green">
+                <td>3</td>
+                <td>3.3.3.3</td>
+                <td>22</td>
+                <td>5</td>
+                <td>US</td>
+                <td>[]</td>
+                <td>amazon.com</td>
+                <td>Amazon Technologies Inc.</td>
+            </tr>
+            <tr class="green">
+                <td>4</td>
+                <td>4.4.4.4</td>
+                <td>0</td>
+                <td>0</td>
+                <td>US</td>
+                <td>[]</td>
+                <td>level3.com</td>
+                <td>Level 3 Communications Inc.</td>
+            </tr>
+            <tr class="green">
+                <td>5</td>
+                <td>5.5.5.5</td>
+                <td>0</td>
+                <td>1</td>
+                <td>DE</td>
+                <td>['dynamic-005-005-005-005.5.5.pool.telefonica.de']</td>
+                <td>telefonica.de</td>
+                <td>Telefonica Germany GmbH & Co. OHG</td>
+            </tr>
+            <tr class="green">
+                <td>6</td>
+                <td>6.6.6.6</td>
+                <td>0</td>
+                <td>1</td>
+                <td>US</td>
+                <td>[]</td>
+                <td>army.mil</td>
+                <td>Headquarters USAISC</td>
+            </tr>
+            <tr class="green">
+                <td>7</td>
+                <td>7.7.7.7</td>
+                <td>0</td>
+                <td>0</td>
+                <td>US</td>
+                <td>[]</td>
+                <td>nic.mil</td>
+                <td>DoD Network Information Center</td>
+            </tr>
+            <tr class="green">
+                <td>8</td>
+                <td>8.8.8.8</td>
+                <td>0</td>
+                <td>53</td>
+                <td>US</td>
+                <td>['dns.google']</td>
+                <td>google.com</td>
+                <td>Google LLC</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

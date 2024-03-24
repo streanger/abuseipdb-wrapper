@@ -166,7 +166,7 @@ Changelog
 ###########################
 - `v.0.2.0`:
 
-  - removed pandas dependency
+  - removed pandas and Jinja2 dependencies
   - custom export functions
   - :code:`date` as isoformat with timezone
 

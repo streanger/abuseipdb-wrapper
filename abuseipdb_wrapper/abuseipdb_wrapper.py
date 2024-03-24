@@ -778,7 +778,7 @@ class AbuseIPDB(Config):
     def export_csv(self, path, matched_only=None, matched=None):
         """we dont use indexing in output csv"""
         header, *rows = matched
-        with open(path, 'w', newline='') as f:
+        with open(path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(header)
             writer.writerows(rows)
