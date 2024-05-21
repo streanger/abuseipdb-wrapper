@@ -4,26 +4,51 @@
 #
 #    pip-compile --annotation-style=line requirements.in
 #
-certifi==2024.2.2         # via requests
-cffi==1.16.0              # via cryptography
-charset-normalizer==3.3.2  # via requests
-cryptography==42.0.5      # via secretstorage
-et-xmlfile==1.1.0         # via openpyxl
-idna==3.6                 # via requests
-importlib-metadata==7.0.1  # via keyring
-jaraco-classes==3.3.1     # via keyring
-jeepney==0.8.0            # via keyring, secretstorage
-keyring==24.3.1           # via -r requirements.in
-markdown-it-py==3.0.0     # via rich
-mdurl==0.1.2              # via markdown-it-py
-more-itertools==10.2.0    # via jaraco-classes
-openpyxl==3.1.2           # via -r requirements.in
-pwinput==1.0.3            # via -r requirements.in
-pycparser==2.21           # via cffi
-pygments==2.17.2          # via rich
-requests==2.31.0          # via -r requirements.in
-rich==13.7.1              # via -r requirements.in
-secretstorage==3.3.3      # via keyring
-tabulate==0.9.0           # via -r requirements.in
-urllib3==2.2.1            # via requests
-zipp==3.17.0              # via importlib-metadata
+certifi==2024.2.2
+    # via requests
+cffi==1.16.0
+    # via cryptography
+charset-normalizer==3.3.2
+    # via requests
+cryptography==42.0.5
+    # via secretstorage
+et-xmlfile==1.1.0
+    # via openpyxl
+idna==3.6
+    # via requests
+importlib-metadata==7.0.1
+    # via keyring
+jaraco-classes==3.3.1
+    # via keyring
+jeepney==0.8.0
+    # via
+    #   keyring
+    #   secretstorage
+keyring==24.3.1
+    # via -r requirements.in
+markdown-it-py==3.0.0
+    # via rich
+mdurl==0.1.2
+    # via markdown-it-py
+more-itertools==10.2.0
+    # via jaraco-classes
+openpyxl==3.1.2
+    # via -r requirements.in
+pwinput==1.0.3
+    # via -r requirements.in
+pycparser==2.21
+    # via cffi
+pygments==2.17.2
+    # via rich
+requests==2.32.0
+    # via -r requirements.in
+rich==13.7.1
+    # via -r requirements.in
+secretstorage==3.3.3
+    # via keyring
+tabulate==0.9.0
+    # via -r requirements.in
+urllib3==2.2.1
+    # via requests
+zipp==3.17.0
+    # via importlib-metadata
